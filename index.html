@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Kod tylko z aplikacji; połączenia tylko z publicznymi danymi rynkowymi (Binance, Hyperliquid, alternative.me) i z Google (Firebase – panel). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.binance.com https://fapi.binance.com https://api.hyperliquid.xyz https://api.alternative.me; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<title>Centrum inwestora</title>
+<meta name="description" content="Panel, asystent rynku i laboratorium backtestów na telefon.">
+<meta name="theme-color" content="#011413">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Inwestor">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikony/ikona-192.png">
+<link rel="apple-touch-icon" href="ikony/ikona-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="styl.css">
+<script src="js/serwer-w-telefonie.js"></script>
+</head>
+<body>
+<div class="aplikacja">
+  <div class="ekrany">
+    <section class="ekran" id="ekran-panel" data-ramka="panel.html" data-tytul="Panel inwestora" role="tabpanel" aria-labelledby="zakl-panel"></section>
+    <section class="ekran" id="ekran-asystent" data-ramka="silnik/asystent.html" data-tytul="Asystent rynku" role="tabpanel" aria-labelledby="zakl-asystent"></section>
+    <section class="ekran" id="ekran-laboratorium" data-ramka="silnik/laboratorium.html" data-tytul="Laboratorium backtestów" role="tabpanel" aria-labelledby="zakl-laboratorium"></section>
+    <section class="ekran ekran-wiecej" id="ekran-wiecej" role="tabpanel" aria-labelledby="zakl-wiecej">
+      <div class="wiecej">
+        <h1 class="tytul">Więcej</h1>
+
+        <section class="karta" id="kartaDane">
+          <h2>Dane rynkowe w telefonie</h2>
+          <p class="male">Asystent i Laboratorium pobierają świece i funding wprost z Binance i Hyperliquid i trzymają je w pamięci telefonu. Przy kolejnych uruchomieniach dociągają tylko nowe świece.</p>
+          <div id="stanDanych" class="male">Sprawdzam…</div>
+          <div class="przyciski"><button id="usunDane" class="drugi">Usuń pobrane dane rynkowe</button></div>
+        </section>
+
+        <section class="karta">
+          <h2>Powiadomienia o sygnałach</h2>
+          <p class="male">Aplikacja w telefonie nie działa w tle, więc sama nie powiadomi Cię o nowej świecy. Powiadomienia wysyła Centrum na komputerze:</p>
+          <ol class="male lista">
+            <li>Zainstaluj na iPhonie darmową aplikację <b>ntfy</b>.</li>
+            <li>Na komputerze w Centrum otwórz <b>Asystent → Powiadomienia</b>, zaznacz „Na telefon przez ntfy.sh” i przepisz temat do aplikacji ntfy.</li>
+            <li>Sygnał przyjdzie na telefon nawet przy zamkniętej aplikacji, dopóki Centrum działa na komputerze.</li>
+          </ol>
+        </section>
+
+        <section class="karta">
+          <h2>Panel z komputera</h2>
+          <p class="male" id="stanPanelu">Jeszcze nie połączony. Panel na telefonie będzie pokazywał migawkę wyników z komputera (prywatnie, przez Twoje konto) i liczył na żywo pozycje z Hyperliquid.</p>
+        </section>
+
+        <section class="karta">
+          <h2>Instalacja na iPhonie</h2>
+          <ol class="male lista">
+            <li>Otwórz tę stronę w <b>Safari</b>.</li>
+            <li>Stuknij <b>Udostępnij</b> (kwadrat ze strzałką), potem <b>Do ekranu początkowego</b>.</li>
+            <li>Aplikacja „Inwestor” otwiera się bez paska przeglądarki, tak jak Bilans.</li>
+          </ol>
+          <p class="male">Aktualizacja: zamknij aplikację w przełączniku aplikacji i otwórz ją ponownie.</p>
+        </section>
+
+        <section class="karta karta-usun">
+          <h2>Usuń wszystko z tego telefonu</h2>
+          <p class="male">Kasuje z telefonu wszystko, co zapisała ta aplikacja: pobrane świece i funding, dzienniki wyników i sygnałów, ustawienia, kopię offline aplikacji i logowanie do konta (z kopią migawek panelu).</p>
+          <p class="male">Nie usuwa danych w chmurze (migawki w Firebase) ani ikony z ekranu początkowego. Ikonę usuniesz, przytrzymując ją i wybierając „Usuń z ekranu początkowego”.</p>
+          <div class="przyciski"><button id="usunWszystko" class="niebezpieczny">Usuń wszystko z tego telefonu</button></div>
+          <div id="wynikUsuwania" class="male" role="status"></div>
+        </section>
+
+        <p class="wersja" id="wersja"></p>
+      </div>
+    </section>
+  </div>
+
+  <nav class="zakladki" role="tablist" aria-label="Ekrany">
+    <button role="tab" id="zakl-panel" data-karta="panel" aria-controls="ekran-panel"><span class="ik" aria-hidden="true"></span>Panel</button>
+    <button role="tab" id="zakl-asystent" data-karta="asystent" aria-controls="ekran-asystent"><span class="ik" aria-hidden="true"></span>Asystent</button>
+    <button role="tab" id="zakl-laboratorium" data-karta="laboratorium" aria-controls="ekran-laboratorium"><span class="ik" aria-hidden="true"></span>Laboratorium</button>
+    <button role="tab" id="zakl-wiecej" data-karta="wiecej" aria-controls="ekran-wiecej"><span class="ik" aria-hidden="true"></span>Więcej</button>
+  </nav>
+</div>
+<div id="baner" class="baner" role="status" hidden></div>
+<script src="js/powloka.js"></script>
+</body>
+</html>

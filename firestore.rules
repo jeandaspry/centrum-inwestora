@@ -1,0 +1,14 @@
+rules_version = '2';
+// Centrum inwestora: migawki panelu i podgląd PIT-38. Czytać i zapisywać może WYŁĄCZNIE zalogowany właściciel
+// (ten sam uid na komputerze i w telefonie). Wszystko inne jest zablokowane.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /uzytkownicy/{uid}/inwestor/{dokument} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.uid == uid && dokument in ['migawka', 'pit'];
+    }
+    match /{wszystko=**} {
+      allow read, write: if false;
+    }
+  }
+}

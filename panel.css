@@ -1,0 +1,87 @@
+/* Panel na telefon – wygląd panelu inwestora (ciemny, morski, szklane karty), ułożony pod kciuk. */
+:root {
+  color-scheme: dark;
+  --tekst: #ecfffa; --tekst2: #a7cdc4; --tekst3: #7fa79e; --akcent: #43f0c6; --na-akcencie: #012a21;
+  --plus: #6ff3c4; --minus: #ff9d9d; --s-plus: #43f0c6; --s-minus: #ff8a8a; --warning: #ffd166; --critical: #ff6b6b;
+  --mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --szklo: linear-gradient(180deg, rgba(255, 255, 255, .065), rgba(255, 255, 255, .03)), rgba(1, 20, 17, .7);
+  --przycisk-glowny: linear-gradient(180deg, #5ef9d6 0%, #1fdaa9 48%, #0cb48b 100%);
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background: transparent; color: var(--tekst); font: 14px/1.5 var(--mono); letter-spacing: -.005em; }
+.panel { padding: 14px 14px 28px; max-width: 640px; margin: 0 auto; }
+.naglowek { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 4px; }
+h1 { margin: 0; font: 700 1.6rem/1.1 var(--mono); letter-spacing: -.03em; color: #fff; }
+.przelacznik { display: inline-flex; border: 1px solid rgba(255, 255, 255, .15); border-radius: 999px; background: rgba(4, 14, 12, .62); padding: 3px; gap: 2px; }
+.przelacznik button { border: 0; border-radius: 999px; background: transparent; color: var(--tekst2); font: 500 .76rem/1.2 var(--mono); padding: 8px 12px; cursor: pointer; }
+.przelacznik button.wl { background: var(--przycisk-glowny); color: var(--na-akcencie); font-weight: 700; }
+.stan { margin: 4px 0 12px; font-size: .72rem; color: var(--tekst3); display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.stan .k { display: inline-flex; gap: 6px; align-items: center; }
+.kropka { width: 8px; height: 8px; border-radius: 50%; background: var(--tekst3); display: inline-block; flex: none; }
+.kropka.zywe { background: var(--akcent); box-shadow: 0 0 0 3px rgba(67, 240, 198, .2), 0 0 10px rgba(67, 240, 198, .7); }
+.kropka.uwaga { background: var(--warning); } .kropka.blad { background: var(--critical); }
+.karta { background: var(--szklo); border: 1px solid rgba(255, 255, 255, .1); border-radius: 16px; padding: 16px; margin-bottom: 14px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 20px 50px -30px rgba(0, 0, 0, .6); }
+.karta h2 { margin: 0 0 10px; font: 600 .9rem/1.3 var(--mono); color: #fff; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.karta h2 small { font-size: .7rem; color: var(--tekst3); font-weight: 400; }
+.male { font-size: .78rem; color: var(--tekst2); margin: 0 0 8px; }
+.b-male { font-size: .7rem; color: var(--tekst3); }
+.plus { color: var(--plus); } .minus { color: var(--minus); }
+b { color: #fff; font-weight: 600; }
+
+/* wynik (hero) */
+.et { font-size: .72rem; color: var(--tekst3); }
+.liczba { font: 800 2.3rem/1.05 var(--mono); letter-spacing: -.05em; margin: 4px 0 2px; }
+.liczba-pln { font-size: .86rem; color: var(--tekst2); margin-bottom: 12px; }
+.wiersze { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.wiersze div { min-width: 0; }
+.wiersze b { display: block; font-size: .92rem; font-variant-numeric: tabular-nums; }
+.kontrola { margin-top: 10px; font-size: .7rem; color: var(--tekst3); }
+.cel { display: grid; grid-template-columns: 112px 1fr; gap: 14px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.pierscien { position: relative; width: 112px; height: 112px; }
+.pierscien svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.pierscien .srodek { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.pierscien .proc { font: 800 1.25rem/1 var(--mono); letter-spacing: -.04em; color: #fff; }
+.pierscien .pod { font-size: .62rem; color: var(--tekst3); margin-top: 3px; }
+
+/* pozycje */
+.pozycja { background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .09); border-radius: 13px; padding: 12px 13px; margin-top: 10px; }
+.pozycja .gora { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pozycja .rynek { font: 700 1rem var(--mono); color: #fff; }
+.etykieta { font-size: .66rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .1); color: var(--tekst2); }
+.etykieta.long { color: var(--plus); border-color: rgba(67, 240, 198, .35); } .etykieta.short { color: var(--minus); border-color: rgba(255, 138, 138, .35); }
+.pozycja .pnl { font: 800 1.5rem/1.1 var(--mono); letter-spacing: -.04em; margin: 8px 0 2px; }
+.siatka { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-top: 10px; font-size: .78rem; }
+.siatka .w { color: #fff; font-variant-numeric: tabular-nums; }
+.miernik { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-top: 10px; }
+.miernik i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #1fdaa9, #8dffe2); }
+.miernik i.warning { background: var(--warning); } .miernik i.critical { background: var(--critical); }
+.opis-lik { display: flex; justify-content: space-between; gap: 8px; font-size: .72rem; color: var(--tekst2); margin-top: 5px; }
+.pogrub { color: var(--critical); font-weight: 700; }
+
+/* konta */
+.konto { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 9px 0; border-bottom: 1px solid rgba(255, 255, 255, .07); font-size: .82rem; }
+.konto:last-child { border-bottom: 0; }
+.konto .nazwa { display: flex; gap: 7px; align-items: center; min-width: 0; }
+.konto .nazwa span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.konto .w { text-align: right; font-variant-numeric: tabular-nums; }
+.konto .pod { grid-column: 1 / -1; font-size: .68rem; color: var(--tekst3); }
+.konto.poza { opacity: .55; }
+
+/* PIT */
+.pit-kwota { font: 800 1.6rem/1.1 var(--mono); letter-spacing: -.04em; color: #fff; margin: 4px 0 10px; }
+
+/* komunikaty, formularz */
+.ramka { border-radius: 13px; background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .11); padding: 11px 13px; font-size: .78rem; color: var(--tekst2); margin-bottom: 14px; }
+.ramka.uwaga { background: rgba(255, 209, 102, .14); border-color: rgba(255, 209, 102, .45); }
+.ramka.blad { background: rgba(255, 107, 107, .16); border-color: rgba(255, 107, 107, .5); }
+.ramka ul { margin: 6px 0 0; padding-left: 18px; }
+.formularz { display: grid; gap: 10px; }
+.formularz label { display: grid; gap: 4px; font-size: .74rem; color: var(--tekst3); }
+input { font: 16px var(--mono); color: var(--tekst); background: rgba(0, 0, 0, .28); border: 1px solid rgba(255, 255, 255, .14); border-radius: 10px; padding: 10px 12px; width: 100%; }
+input:focus { outline: none; border-color: var(--akcent); box-shadow: 0 0 0 3px rgba(67, 240, 198, .2); }
+button.glowny, button.drugi { font: 700 .84rem/1.2 var(--mono); padding: 12px 18px; border-radius: 999px; min-height: 44px; cursor: pointer; }
+button.glowny { background: var(--przycisk-glowny); color: var(--na-akcencie); border: 1px solid rgba(170, 255, 232, .55); }
+button.drugi { background: rgba(4, 14, 12, .62); color: var(--tekst); border: 1px solid rgba(255, 255, 255, .18); font-weight: 600; }
+button:disabled { opacity: .5; }
+.stopka { text-align: center; margin-top: 18px; }
+a { color: var(--akcent); }

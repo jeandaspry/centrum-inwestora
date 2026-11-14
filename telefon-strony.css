@@ -1,0 +1,22 @@
+/* Dodatki do stron Asystenta i Laboratorium w aplikacji na telefon (dokłada je narzedzia/zbuduj-telefon.ps1). */
+
+/* przejścia między Asystentem i Laboratorium daje pasek kart na dole aplikacji */
+.pasek .przycisk[data-centrum] { display: none; }
+
+/* aplikacja w telefonie nie działa w tle – powiadomienia o sygnałach wysyła Centrum na komputerze (ntfy) */
+#powiadomienia { display: none; }
+
+/* serwisy z newsami nie pozwalają telefonowi pobierać nagłówków wprost – zostaje indeks strachu i chciwości */
+#newsy .news h3, #newsy .news ul { display: none; }
+#newsy .news::after {
+  content: "Nagłówki newsów są w Centrum na komputerze: serwisy z newsami nie pozwalają aplikacji w telefonie pobierać ich wprost.";
+  display: block; font-size: .74rem; color: #7fa79e; margin-top: 8px;
+}
+
+/* palec zamiast myszy: większe pola i przyciski, bez powiększania strony przy wpisywaniu (iOS powiększa pola < 16 px) */
+input, select, textarea { font-size: 16px !important; }
+button, .przycisk { min-height: 38px; }
+input[type=range] { height: 8px; }
+input[type=range]::-webkit-slider-thumb { width: 26px; height: 26px; }
+.szybkie button { min-height: 34px; padding: 6px 12px; }
+main, main.lab { padding-bottom: 28px; }

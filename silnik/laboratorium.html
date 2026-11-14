@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.binance.com https://fapi.binance.com https://api.hyperliquid.xyz https://api.alternative.me https://ntfy.sh; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<!-- Wersja na telefon: zbudowana przez Centrum-Inwestora/narzedzia/zbuduj-telefon.ps1 z Laboratorium-Backtestow/aplikacja – nie edytuj ręcznie. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laboratorium backtestów</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="laboratorium.css">
+<link rel="stylesheet" href="../telefon-strony.css">
+<script src="../js/serwer-w-telefonie.js"></script>
+<script src="centrum-most.js"></script>
+</head>
+<body>
+<!-- Nowy wygląd Laboratorium (jak panel i asystent). Ta sama logika co index.html (app.js), stara strona zostaje bez zmian. -->
+<header class="pasek">
+  <div class="pasek-wn">
+    <h1>Laboratorium backtestów</h1>
+    <span class="rozpychacz"></span>
+    <a class="przycisk" href="asystent.html" data-centrum="asystent" title="Asystent rynku: układ na żywo, sygnały przy wybranej dźwigni">Asystent rynku →</a>
+  </div>
+</header>
+<main class="lab">
+  <p class="tytul-strony">Laboratorium</p>
+  <p class="maly wstep">Strategia musi przejść 4 bramki po kolei. Każda odrzuca wyniki, które mogły wyjść z przypadku: optymalizacja w próbie, test na przetasowanych danych, walk-forward na latach spoza nauki i walk-forward na przetasowanych danych.</p>
+  <div class="uklad">
+    <aside>
+      <section class="karta karta-ustaw">
+        <h2>Ustawienia</h2>
+        <label for="plik">Dane (świece)</label>
+        <select id="plik"></select>
+        <div class="maly" id="opisDanych"></div>
+        <label for="strategia">Strategia</label>
+        <select id="strategia"></select>
+        <div class="maly" id="opisStrategii"></div>
+        <div class="rzad">
+          <div><label for="lata">Trening (lata)</label><input id="lata" type="number" min="0.5" max="6" step="0.5" value="4"></div>
+          <div><label for="krok">Reoptymalizacja co (dni)</label><input id="krok" type="number" min="1" max="365" value="30"></div>
+        </div>
+        <label for="koszt">Koszt za 1 stronę transakcji (%)</label>
+        <input id="koszt" type="number" min="0" max="1" step="0.005" value="0.055">
+        <div class="maly" style="margin-top:4px">Opłata taker HL 0,045% + poślizg 0,01%. Odwrócenie long→short liczy się podwójnie.</div>
+        <label for="funding">Funding</label>
+        <select id="funding"><option value="tak">Rzeczywiste stawki z giełdy</option><option value="nie">Wyłączony (jak w pierwszej wersji)</option></select>
+        <label for="fundingStaly">Funding przed początkiem historii (% na 8 h)</label>
+        <input id="fundingStaly" type="number" step="0.001" value="0.01">
+        <div class="maly" style="margin-top:4px">Historia stawek: Binance od 09.2019, HL od 05.2023. Wcześniej przyjmujemy stałą stawkę (0,01% na 8 h to stawka bazowa giełd).</div>
+        <div class="rzad">
+          <div><label for="dzwignia">Dźwignia (symulacja)</label><input id="dzwignia" type="number" min="1" max="50" step="1" value="5"></div>
+          <div><label for="udzial">Depozyt na transakcję (% konta)</label><input id="udzial" type="number" min="1" max="100" step="1" value="100"></div>
+        </div>
+        <label for="mm">Depozyt podtrzymujący (%)</label>
+        <input id="mm" type="number" min="0" max="10" step="0.05" value="1.25">
+        <div class="maly" style="margin-top:4px">BTC na HL: maks. 40×, likwidacja przy depozycie poniżej 1,25% wartości pozycji. Bramki zawsze liczą się przy 1×: dźwignia zmienia ryzyko, a nie przewagę.</div>
+        <div class="rzad">
+          <div><label for="n2">Permutacje (bramka 2)</label><input id="n2" type="number" min="50" max="5000" step="50" value="1000"></div>
+          <div><label for="n4">Permutacje (bramka 4)</label><input id="n4" type="number" min="20" max="2000" step="10" value="200"></div>
+        </div>
+        <label for="ziarno">Ziarno losowania</label>
+        <input id="ziarno" type="number" value="1">
+        <label class="check"><input id="wszystkie" type="checkbox"> Pokaż kolejne bramki mimo porażki</label>
+        <div class="maly">Domyślnie wyłączone, żeby nie „zużywać” danych spoza próby na strategie, które już odpadły.</div>
+        <button id="start">Uruchom 4 bramki</button>
+        <button id="stop" class="drugi ukryj">Zatrzymaj</button>
+        <div class="pasek-postepu"><i id="postep"></i></div>
+        <div class="maly" id="status"></div>
+      </section>
+      <section class="karta karta-dane">
+        <h2>Odśwież dane</h2>
+        <div class="rzad">
+          <div><label for="zrodlo">Źródło</label><select id="zrodlo"><option value="binance">Binance (od 2017)</option><option value="hyperliquid">Hyperliquid (5000 świec)</option></select></div>
+          <div><label for="interwal">Interwał</label><select id="interwal"><option>4h</option><option>1h</option><option>15m</option><option>1d</option></select></div>
+        </div>
+        <label for="symbol">Symbol (puste = BTC)</label>
+        <input id="symbol" placeholder="np. ETHUSDT lub ETH">
+        <button id="pobierz" class="drugi">Pobierz świece i funding</button>
+        <div class="maly" id="statusPobierania"></div>
+      </section>
+    </aside>
+    <div>
+      <section class="karta" id="kartaWerdykt"><h2>Werdykt <span class="znak czeka" id="znakW">nie uruchomiono</span></h2><div class="werdykt" id="werdykt">Wybierz dane i strategię, potem „Uruchom 4 bramki”.</div></section>
+      <section class="karta" id="g1"><h2>Bramka 1 · wynik w próbie treningowej <span class="znak czeka">czeka</span></h2><div class="tresc"></div></section>
+      <section class="karta" id="g2"><h2>Bramka 2 · test permutacyjny w próbie <span class="znak czeka">czeka</span></h2><div class="tresc"></div></section>
+      <section class="karta" id="g3"><h2>Bramka 3 · walk-forward (dane spoza próby) <span class="znak czeka">czeka</span></h2><div class="tresc"></div></section>
+      <section class="karta" id="dz"><h2>Symulacja konta z dźwignią (dane spoza próby) <span class="znak czeka">czeka</span></h2><div class="tresc"><p class="maly">Pojawi się po bramce 3. Używa pozycji z walk-forward.</p></div></section>
+      <section class="karta" id="g4"><h2>Bramka 4 · test permutacyjny walk-forward <span class="znak czeka">czeka</span></h2><div class="tresc"></div></section>
+      <section class="karta karta-dziennik"><h2>Dziennik testów</h2><div class="maly">Każde uruchomienie zapisuje się w wyniki/dziennik.json. Im więcej pomysłów sprawdzisz na tych samych danych spoza próby, tym łatwiej trafić na fałszywego zwycięzcę.</div><div class="przewin" id="dziennik"></div></section>
+    </div>
+  </div>
+</main>
+<script src="lab.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

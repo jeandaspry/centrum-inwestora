@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<!-- Kod tylko z aplikacji i z biblioteki Firebase; połączenia: Google (Firebase – migawki z komputera) i Hyperliquid (pozycje na żywo). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.hyperliquid.xyz https://*.googleapis.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Panel inwestora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<main class="panel">
+  <header class="naglowek">
+    <h1>Panel</h1>
+    <span class="przelacznik" id="zakres" role="group" aria-label="Które konta">
+      <button data-z="zywe">Na żywo</button><button data-z="wszystko">Wszystkie</button>
+    </span>
+  </header>
+  <p class="stan" id="stan"></p>
+  <div id="tresc"><p class="male">Ładuję…</p></div>
+</main>
+<script src="js/konfiguracja.js"></script>
+<script src="js/chmura.js"></script>
+<script src="js/dane-testowe.js"></script>
+<script src="js/panel-telefon.js"></script>
+</body>
+</html>

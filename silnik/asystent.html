@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.binance.com https://fapi.binance.com https://api.hyperliquid.xyz https://api.alternative.me https://ntfy.sh; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<!-- Wersja na telefon: zbudowana przez Centrum-Inwestora/narzedzia/zbuduj-telefon.ps1 z Laboratorium-Backtestow/aplikacja – nie edytuj ręcznie. -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asystent rynku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="asystent.css">
+<link rel="stylesheet" href="../telefon-strony.css">
+<script src="../js/serwer-w-telefonie.js"></script>
+<script src="centrum-most.js"></script>
+</head>
+<body>
+<header class="pasek">
+  <div class="pasek-wn">
+    <h1>Asystent rynku</h1>
+    <span class="przelacznik" id="interwaly" title="Interwał świec: statystyka z historii Binance, układ na żywo z Hyperliquid">
+      <button data-iw="15m">15m</button><button data-iw="1h">1h</button><button data-iw="4h">4h</button>
+    </span>
+    <span class="rozpychacz"></span>
+    <span class="stan" id="stan"><span class="kropka laduje"></span> uruchamiam…</span>
+    <a class="przycisk" href="laboratorium.html" data-centrum="laboratorium" title="Laboratorium backtestów – sprawdzanie strategii 4 bramkami">Laboratorium →</a>
+  </div>
+  <nav class="nawigacja">
+    <a href="#teraz">Teraz</a><a href="#poziomy">Poziomy</a><a href="#uklad">Układ rynku</a><a href="#dzwignie">Dźwignia</a><a href="#wiarygodnosc">Wiarygodność</a><a href="#dziennik">Dziennik</a><a href="#newsy">Newsy</a><a href="#ustawienia">Ustawienia</a>
+  </nav>
+</header>
+
+<main>
+  <p class="tytul-strony"><span>BTC · Teraz</span><span class="cena" id="cenaTytul"></span></p>
+
+  <section class="karta" id="teraz">
+    <h2>Sygnał <span class="podtytul" id="terazPod"></span></h2>
+    <div class="hero">
+      <div>
+        <div class="et" id="decEt">Sygnał</div>
+        <div class="decyzja czekaj" id="decyzja">…</div>
+        <div id="decZnaczniki"></div>
+        <p class="zdanie" id="zdanie" style="margin-top:12px">Liczę statystykę z historii BTC…</p>
+      </div>
+      <div class="panel-dzw">
+        <div class="dzw-wart"><b id="dzwWart">10×</b><span id="dzwOpis">likwidacja przy ruchu ceny o 8,75%</span></div>
+        <input type="range" id="dzwignia" min="1" max="40" step="1" value="10" aria-label="Dźwignia od 1 do 40">
+        <div class="szybkie" id="szybkie"></div>
+        <div class="przyciski" style="margin-top:12px">
+          <label for="depozyt" style="margin:0">Depozyt na transakcję</label>
+          <input type="number" id="depozyt" min="1" step="1" value="150" style="width:110px"> <span class="male">USD</span>
+        </div>
+      </div>
+    </div>
+    <h3>Co działo się w podobnych układach przy wybranej dźwigni</h3>
+    <div class="szanse" id="szanse"></div>
+    <div class="legenda">
+      <span style="--k:#43f0c6">cel</span><span style="--k:rgba(255,255,255,.28)">czas minął</span><span style="--k:#ffd166">stop</span><span style="--k:#ff6b6b">likwidacja</span>
+    </div>
+    <div id="terazUwagi"></div>
+  </section>
+
+  <section class="karta" id="poziomy">
+    <h2>Poziomy i kwoty <span class="podtytul"><span class="przelacznik" id="kierunekPoz"><button data-k="1">Long</button><button data-k="-1">Short</button></span></span></h2>
+    <div class="tresc"><p class="male">Ładuję…</p></div>
+  </section>
+
+  <section class="karta" id="uklad">
+    <h2>Układ rynku <span class="podtytul" id="ukladPod"></span></h2>
+    <div class="tresc"><p class="male">Ładuję…</p></div>
+  </section>
+
+  <section class="karta" id="dzwignie">
+    <h2>Dźwignia a wynik <span class="podtytul">od 1× do 40×</span></h2>
+    <div class="tresc"><p class="male">Liczę…</p></div>
+  </section>
+
+  <section class="karta" id="wiarygodnosc">
+    <h2>Czy tym liczbom można ufać? <span class="podtytul" id="wiarPod"></span></h2>
+    <div class="tresc"><p class="male">Liczę…</p></div>
+  </section>
+
+  <section class="karta" id="dziennik">
+    <h2>Dziennik sygnałów <span class="podtytul">rozliczane z prawdziwymi cenami</span></h2>
+    <div class="tresc"><p class="male">Brak sygnałów.</p></div>
+  </section>
+
+  <div class="dwie">
+    <section class="karta" id="newsy">
+      <h2>Newsy i nastroje <span class="podtytul">tylko podgląd – nie wchodzą do liczb</span></h2>
+      <div class="tresc news"><p class="male">Ładuję…</p></div>
+    </section>
+    <section class="karta" id="powiadomienia">
+      <h2>Powiadomienia</h2>
+      <label class="check"><input id="pulpit" type="checkbox"> Na tym komputerze (powiadomienie przeglądarki)</label>
+      <label class="check"><input id="telefon" type="checkbox"> Na telefon przez ntfy.sh</label>
+      <label for="temat">Temat ntfy (traktuj jak hasło)</label>
+      <input id="temat" type="text">
+      <p class="male" style="margin-top:8px">Zainstaluj na telefonie darmową aplikację <b>ntfy</b> i zasubskrybuj ten temat. Treść (kierunek, dźwignia, poziomy BTC) przechodzi przez publiczny serwer ntfy.sh, bez danych o Tobie. Powiadomienie wychodzi, gdy na nowej zamkniętej świecy pojawi się LONG albo SHORT przy Twojej dźwigni. Strona musi być otwarta.</p>
+      <div class="przyciski"><button id="test" class="maly">Wyślij powiadomienie testowe</button><span class="male" id="statusPowiad"></span></div>
+    </section>
+  </div>
+
+  <section class="karta" id="ustawienia">
+    <h2>Ustawienia statystyki</h2>
+    <label>Cechy układu (z nich powstaje „podobna sytuacja”)</label>
+    <div class="cechy-wybor" id="cechy"></div>
+    <div class="ustaw">
+      <div><label for="k">Cel (× ATR)</label><input id="k" type="number" min="0.25" max="10" step="0.25" value="2"></div>
+      <div><label for="m">Stop (× ATR, 0 = bez stopu)</label><input id="m" type="number" min="0" max="5" step="0.25" value="1"></div>
+      <div><label for="H">Maks. świec w transakcji</label><input id="H" type="number" min="3" max="200" value="30"></div>
+      <div><label for="minN">Min. podobnych przypadków</label><input id="minN" type="number" min="5" max="200" value="20"></div>
+      <div><label for="koszt">Koszt za stronę (%)</label><input id="koszt" type="number" min="0" step="0.005" value="0.055"></div>
+      <div><label for="lata">Pierwsze lata tylko do nauki</label><input id="lata" type="number" min="1" max="6" step="0.5" value="4"></div>
+      <div><label for="nperm">Permutacje (walidacja)</label><input id="nperm" type="number" min="50" max="2000" step="50" value="400"></div>
+    </div>
+    <div class="przyciski">
+      <button id="przelicz" class="glowny">Przelicz statystykę</button>
+      <button id="pobierzHist" class="maly ukryte">Pobierz historię tego interwału</button>
+      <span class="male" id="status"></span>
+    </div>
+    <div class="pasek-postepu"><i id="postep"></i></div>
+    <p class="b-male" style="margin-top:12px">Wszystko liczy się na tym telefonie: historia BTC z Binance (od 2017 r.) i funding, a bieżące świece, funding i cena z Hyperliquid. Bez AI i bez opłat.
+      Likwidacja: ruch ceny o 1/dźwignia − 1,25% (depozyt podtrzymujący BTC na HL), w przybliżeniu, bez wpływu opłat na cenę likwidacji.</p>
+  </section>
+</main>
+<script src="lab.js"></script>
+<script src="asystent-silnik.js"></script>
+<script src="asystent.js"></script>
+</body>
+</html>
