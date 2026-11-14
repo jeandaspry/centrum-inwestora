@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- Kod tylko z aplikacji; połączenia tylko z publicznymi danymi rynkowymi (Binance, Hyperliquid, alternative.me) i z Google (Firebase – panel). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.binance.com https://fapi.binance.com https://api.hyperliquid.xyz https://api.alternative.me; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<!-- Kod tylko z aplikacji i z biblioteki Firebase (logowanie); połączenia: publiczne dane rynkowe (Binance, Hyperliquid, alternative.me) i Google (Firebase). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.binance.com https://fapi.binance.com https://api.hyperliquid.xyz https://api.alternative.me https://*.googleapis.com; frame-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>Centrum inwestora</title>
 <meta name="description" content="Panel, asystent rynku i laboratorium backtestów na telefon.">
 <meta name="theme-color" content="#011413">
@@ -23,7 +23,23 @@
 <script src="js/serwer-w-telefonie.js"></script>
 </head>
 <body>
-<div class="aplikacja">
+<!-- Ekran logowania: bez zalogowania aplikacja nie wczytuje żadnej karty. -->
+<div class="bramka" id="bramka">
+  <div class="bramka-wn">
+    <img src="ikony/ikona-192.png" alt="" class="bramka-ikona">
+    <h1>Centrum inwestora</h1>
+    <p class="male" id="bramkaOpis">Sprawdzam logowanie…</p>
+    <form class="karta formularz" id="formLogowania" hidden>
+      <label>E-mail<input type="email" id="email" autocomplete="username" autocapitalize="off" spellcheck="false" required></label>
+      <label>Hasło<input type="password" id="haslo" autocomplete="current-password" required></label>
+      <button class="glowny" type="submit">Zaloguj</button>
+      <p class="blad" id="bladLogowania" role="alert"></p>
+    </form>
+    <button class="link" id="usunZBramki" type="button" hidden>Usuń dane tej aplikacji z telefonu</button>
+  </div>
+</div>
+
+<div class="aplikacja" id="aplikacja" hidden>
   <div class="ekrany">
     <section class="ekran" id="ekran-panel" data-ramka="panel.html" data-tytul="Panel inwestora" role="tabpanel" aria-labelledby="zakl-panel"></section>
     <section class="ekran" id="ekran-asystent" data-ramka="silnik/asystent.html" data-tytul="Asystent rynku" role="tabpanel" aria-labelledby="zakl-asystent"></section>
@@ -31,6 +47,13 @@
     <section class="ekran ekran-wiecej" id="ekran-wiecej" role="tabpanel" aria-labelledby="zakl-wiecej">
       <div class="wiecej">
         <h1 class="tytul">Więcej</h1>
+
+        <section class="karta">
+          <h2>Konto</h2>
+          <p class="male">Zalogowano: <b id="kontoEmail"></b></p>
+          <p class="male">Bez logowania aplikacja pokazuje tylko ekran logowania. Wylogowanie usuwa też z telefonu kopię migawek panelu; pobrane dane rynkowe i ustawienia zostają.</p>
+          <div class="przyciski"><button id="wyloguj" class="drugi">Wyloguj</button></div>
+        </section>
 
         <section class="karta" id="kartaDane">
           <h2>Dane rynkowe w telefonie</h2>
@@ -51,7 +74,8 @@
 
         <section class="karta">
           <h2>Panel z komputera</h2>
-          <p class="male" id="stanPanelu">Jeszcze nie połączony. Panel na telefonie będzie pokazywał migawkę wyników z komputera (prywatnie, przez Twoje konto) i liczył na żywo pozycje z Hyperliquid.</p>
+          <p class="male">Panel pokazuje migawkę wyników z komputera (prywatnie, przez Twoje konto), gdy Centrum jest otwarte na komputerze, i sam liczy na żywo pozycje z Hyperliquid.</p>
+          <p class="male">Komputer łączysz i odłączasz na stronie <b>localhost:8777/telefon.html</b>. Tam też usuniesz dane z chmury.</p>
         </section>
 
         <section class="karta">
@@ -67,7 +91,7 @@
         <section class="karta karta-usun">
           <h2>Usuń wszystko z tego telefonu</h2>
           <p class="male">Kasuje z telefonu wszystko, co zapisała ta aplikacja: pobrane świece i funding, dzienniki wyników i sygnałów, ustawienia, kopię offline aplikacji i logowanie do konta (z kopią migawek panelu).</p>
-          <p class="male">Nie usuwa danych w chmurze (migawki w Firebase) ani ikony z ekranu początkowego. Ikonę usuniesz, przytrzymując ją i wybierając „Usuń z ekranu początkowego”.</p>
+          <p class="male">Nie usuwa danych w chmurze (migawki w Firebase) – te usuniesz na komputerze na stronie telefon.html. Nie usuwa też ikony z ekranu początkowego: przytrzymaj ją i wybierz „Usuń z ekranu początkowego”.</p>
           <div class="przyciski"><button id="usunWszystko" class="niebezpieczny">Usuń wszystko z tego telefonu</button></div>
           <div id="wynikUsuwania" class="male" role="status"></div>
         </section>
@@ -85,6 +109,8 @@
   </nav>
 </div>
 <div id="baner" class="baner" role="status" hidden></div>
+<script src="js/konfiguracja.js"></script>
+<script src="js/chmura.js"></script>
 <script src="js/powloka.js"></script>
 </body>
 </html>

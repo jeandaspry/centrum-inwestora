@@ -2,6 +2,10 @@
 
 Aplikacja webowa (PWA) na iPhone'a: **Panel**, **Asystent rynku** i **Laboratorium backtestów**.
 
+- Cała aplikacja jest za **logowaniem** (Firebase Authentication, e-mail i hasło, rejestracja wyłączona). Bez zalogowania
+  nie wczytuje się żadna karta; strony kart otwarte wprost z adresu przechodzą do logowania (`js/tylko-w-aplikacji.js`).
+- Wylogowanie usuwa z telefonu kopię migawek panelu; „Usuń wszystko z tego telefonu” kasuje wszystkie dane aplikacji.
+
 - **Asystent i Laboratorium** działają w telefonie same, bez komputera. Świece i funding pobierają z publicznych API
   Binance i Hyperliquid i trzymają je w pamięci telefonu (IndexedDB). Kod liczący (`silnik/`) jest kopią 1:1 wersji z komputera
   (kopiuje go `narzedzia/zbuduj-telefon.ps1` w folderze Centrum-Inwestora).

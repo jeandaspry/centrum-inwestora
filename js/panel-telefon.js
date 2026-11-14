@@ -154,7 +154,12 @@
 
     h += `<div class="stopka">${S.uzytkownik ? `<p class="b-male">Zalogowano: ${E(S.uzytkownik.email || '')}</p><button class="drugi" id="wyloguj">Wyloguj</button>` : TEST ? '<p class="b-male">Podgląd na zmyślonych danych.</p>' : ''}</div>`;
     $('tresc').innerHTML = h;
-    const w = $('wyloguj'); if (w) w.onclick = async () => { w.disabled = true; await window.CHMURA.wyloguj(); location.reload(); };
+    // w aplikacji wylogowuje całą aplikację (powłoka zamyka karty i czyści kopię migawek)
+    const w = $('wyloguj'); if (w) w.onclick = async () => {
+      w.disabled = true;
+      if (window.parent !== window) { window.parent.postMessage({ centrum: 'wyloguj' }, location.origin); return; }
+      await window.CHMURA.wyloguj(); location.reload();
+    };
   }
 
   function kartaPozycji({ x, p }) {

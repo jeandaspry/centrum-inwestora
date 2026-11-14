@@ -1,9 +1,9 @@
 // Service worker (jak w Bilansie): pliki aplikacji najpierw z sieci (zawsze najnowsza wersja), bez sieci z kopii w telefonie.
 // Dane rynkowe (Binance, Hyperliquid) nie przechodzą przez kopię – trzyma je „serwer w telefonie” w IndexedDB.
-const WERSJA = 'inwestor-0.2';
+const WERSJA = 'inwestor-0.3';
 const PLIKI = [
   './', 'index.html', 'styl.css', 'manifest.webmanifest', 'telefon-strony.css', 'panel.html', 'panel.css',
-  'js/powloka.js', 'js/serwer-w-telefonie.js', 'js/panel-telefon.js', 'js/chmura.js', 'js/konfiguracja.js', 'js/dane-testowe.js',
+  'js/powloka.js', 'js/serwer-w-telefonie.js', 'js/panel-telefon.js', 'js/chmura.js', 'js/konfiguracja.js', 'js/dane-testowe.js', 'js/tylko-w-aplikacji.js',
   'silnik/asystent.html', 'silnik/asystent.css', 'silnik/asystent.js', 'silnik/asystent-silnik.js',
   'silnik/laboratorium.html', 'silnik/laboratorium.css', 'silnik/app.js',
   'silnik/lab.js', 'silnik/worker.js', 'silnik/centrum-most.js',

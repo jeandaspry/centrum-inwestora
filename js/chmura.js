@@ -1,32 +1,43 @@
-// Odczyt migawek z komputera: prywatny Firebase, konto e-mail/hasło właściciela (to samo co na komputerze w telefon.html).
-// Firestore z kopią w telefonie – ostatnia migawka jest widoczna także bez internetu.
+// Logowanie do aplikacji i odczyt migawek z komputera: prywatny Firebase, konto e-mail/hasło właściciela
+// (to samo co na komputerze w telefon.html). Bez zalogowania aplikacja pokazuje tylko ekran logowania.
+// Firestore (z kopią w telefonie – ostatnia migawka widoczna także bez internetu) uruchamia się dopiero w Panelu;
+// powłoka aplikacji używa tylko logowania.
 (function () {
   'use strict';
   const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
-  let p = null;
+  let p = null, baza = null;
   function polacz() {
     if (!window.INWESTOR_FIREBASE) return Promise.resolve(null);
     if (!p) p = (async () => {
-      const [app, auth, fs] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')]);
+      const [app, auth] = await Promise.all([import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js')]);
       const a = app.initializeApp(window.INWESTOR_FIREBASE);
       const au = auth.initializeAuth(a, { persistence: [auth.indexedDBLocalPersistence, auth.browserLocalPersistence] });
-      const db = fs.initializeFirestore(a, { localCache: fs.persistentLocalCache() });
-      return { au, db, auth, fs };
+      return { a, au, auth };
     })();
     return p;
+  }
+  async function firestore() {
+    const f = await polacz();
+    const fs = await import(SDK + 'firebase-firestore.js');
+    if (!baza) baza = fs.initializeFirestore(f.a, { localCache: fs.persistentLocalCache() });
+    return { f, fs, db: baza };
   }
   window.CHMURA = {
     skonfigurowana: () => !!window.INWESTOR_FIREBASE,
     async uzytkownik() { const f = await polacz(); if (!f) return null; await f.au.authStateReady(); return f.au.currentUser; },
     async zaloguj(email, haslo) { const f = await polacz(); return (await f.auth.signInWithEmailAndPassword(f.au, email, haslo)).user; },
-    // wylogowanie usuwa też kopię migawek z pamięci telefonu (potem strona wczytuje się od nowa)
-    async wyloguj() { const f = await polacz(); if (f) { await f.auth.signOut(f.au); try { await f.fs.terminate(f.db); await f.fs.clearIndexedDbPersistence(f.db); } catch (e) { /* kopia zniknie przy następnym wylogowaniu */ } } },
+    // zmiana zalogowania (np. wygaśnięcie sesji); zwraca funkcję wyłączającą nasłuch
+    async naZmiane(cb) { const f = await polacz(); if (!f) return () => {}; return f.auth.onAuthStateChanged(f.au, cb); },
+    // samo wylogowanie; kopię migawek (bazy firestore/*) usuwa powłoka przy następnym starcie strony,
+    // bo otwarta baza nie da się usunąć, dopóki strona z Panelem żyje
+    async wyloguj() { const f = await polacz(); if (f) await f.auth.signOut(f.au); },
     // nasłuch dokumentu uzytkownicy/{uid}/inwestor/{nazwa}; zwraca funkcję wyłączającą nasłuch
     async sluchaj(nazwa, naDane, naBlad) {
       const f = await polacz(); if (!f) return () => {};
       await f.au.authStateReady();
       const u = f.au.currentUser; if (!u) return () => {};
-      return f.fs.onSnapshot(f.fs.doc(f.db, 'uzytkownicy', u.uid, 'inwestor', nazwa),
+      const { fs, db } = await firestore();
+      return fs.onSnapshot(fs.doc(db, 'uzytkownicy', u.uid, 'inwestor', nazwa),
         (s) => naDane(s.exists() ? s.data() : null, s.metadata.fromCache), naBlad);
     }
   };
