@@ -4,10 +4,10 @@
  * więc przełączanie kart nie liczy wszystkiego od nowa. */
 (function () {
   'use strict';
-  const WERSJA = '0.3.2';
+  const WERSJA = '0.4';
   window.INWESTOR_POWLOKA = true;
   const $ = id => document.getElementById(id);
-  const KARTY = ['panel', 'asystent', 'laboratorium', 'wiecej'];
+  const KARTY = ['panel', 'dziennik', 'asystent', 'laboratorium', 'wiecej'];
   const pam = {
     czytaj(k, d) { try { const v = localStorage.getItem('inwestor-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     pisz(k, v) { try { localStorage.setItem('inwestor-' + k, JSON.stringify(v)); } catch (e) { /* tryb prywatny */ } }

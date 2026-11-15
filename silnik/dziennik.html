@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.binance.com https://fapi.binance.com https://api.hyperliquid.xyz https://api.alternative.me https://ntfy.sh; worker-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+<!-- Wersja na telefon: zbudowana przez Centrum-Inwestora/narzedzia/zbuduj-telefon.ps1 z Laboratorium-Backtestow/aplikacja – nie edytuj ręcznie. -->
+<script src="../js/tylko-w-aplikacji.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dziennik tradera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="asystent.css">
+<link rel="stylesheet" href="dziennik.css">
+<link rel="stylesheet" href="../telefon-strony.css">
+<script src="../js/serwer-w-telefonie.js"></script>
+<script src="centrum-most.js"></script>
+</head>
+<body>
+<header class="pasek">
+  <div class="pasek-wn">
+    <h1>Dziennik tradera</h1>
+    <span class="rozpychacz"></span>
+    <span class="stan" id="stan"><span class="kropka laduje"></span> wczytuję…</span>
+    <a class="przycisk" href="asystent.html" data-centrum="asystent" title="Asystent rynku">Asystent →</a>
+  </div>
+  <nav class="nawigacja" id="zakladki">
+    <a href="#trade" data-z="trade">Trade'y</a><a href="#wnioski" data-z="wnioski">Wnioski</a><a href="#zasady" data-z="zasady">Zasady</a><a href="#setupy" data-z="setupy">Setupy z Chrome</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ======================= TRADE'Y ======================= -->
+  <section class="zakl" id="z-trade">
+    <div class="kafle" id="kafle"></div>
+
+    <section class="karta" id="kartaDzis"></section>
+
+    <section class="karta">
+      <h2>Twoje trade'y <span class="podtytul" id="listaPod"></span></h2>
+      <div class="narzedzia">
+        <span class="przelacznik filtry" id="filtry">
+          <button data-f="wszystkie">Wszystkie</button><button data-f="puste">Do uzupełnienia</button><button data-f="setup">Z setupem</button><button data-f="bezSetupu">Bez setupu</button><button data-f="zasady">Łamią zasady</button><button data-f="revenge">Po stracie</button>
+        </span>
+        <span class="rozpychacz"></span>
+        <button class="przycisk" id="dodajPlan" title="Wpisz plan, zanim wejdziesz – strona dopasuje go do trade'u z giełdy">+ Plan przed wejściem</button>
+        <button class="przycisk" id="dodajReczny" title="Trade z giełdy, której panel nie pobiera">+ Trade ręcznie</button>
+        <button class="przycisk" id="odswiezAuto" title="Pobiera od nowa SL/TP, kapitał, świece i ocenę Asystenta dla wszystkich trade'ów (Twoje wpisy zostają)">Odśwież dane z giełdy</button>
+        <button class="przycisk glowny" id="wypelnijWszystko" title="Pobiera SL/TP z giełdy, kapitał konta, ruch ceny i ocenę Asystenta, a potem wypełnia puste pola">Wypełnij za mnie</button>
+      </div>
+      <div id="postep" class="postep ukryte"><i></i><span></span></div>
+      <div id="plany"></div>
+      <div id="lista" class="lista-trade"></div>
+      <p class="b-male" style="margin-top:10px">Liczby z giełdy są te same co w panelu inwestora (Hyperliquid, Jupiter, Kraken Futures). Dzień = dzień w Polsce. Kliknij trade, żeby go opisać.</p>
+    </section>
+  </section>
+
+  <!-- ======================= WNIOSKI ======================= -->
+  <section class="zakl ukryte" id="z-wnioski">
+    <section class="karta">
+      <h2>Wynik w czasie <span class="podtytul">łącznie i gdybyś trzymał się zasad 4–7</span></h2>
+      <canvas id="krzywa" class="krzywa" height="220"></canvas>
+      <div class="legenda"><span style="--k:#43f0c6">wszystkie trade'y</span><span style="--k:#7cc8ff">bez trade'ów łamiących zasady 4–7 (kiedy wchodzić)</span></div>
+      <p class="male" id="krzywaOpis"></p>
+    </section>
+    <section class="karta">
+      <h2>Co mówią Twoje dane <span class="podtytul">porównania od największej różnicy</span></h2>
+      <div id="porownania"></div>
+    </section>
+    <section class="karta" id="kartaWyjscia"></section>
+    <section class="karta">
+      <h2>Wnioski z dziennika Claude w Chrome <span class="podtytul">stan do 11.11.2026</span></h2>
+      <ul class="male lista-wn" id="obserwacje"></ul>
+    </section>
+    <p class="b-male">To opis Twoich danych, nie rada inwestycyjna. Przy małej liczbie trade'ów różnice mogą być przypadkiem – oznaczam to.</p>
+  </section>
+
+  <!-- ======================= ZASADY ======================= -->
+  <section class="zakl ukryte" id="z-zasady">
+    <section class="karta">
+      <h2>Zasady metody v3 <span class="podtytul">z dziennika Claude w Chrome · ile kosztuje ich łamanie</span></h2>
+      <div id="zasadyTabela"></div>
+      <p class="b-male" style="margin-top:10px">„Bez danych” = nie da się sprawdzić (np. brak SL, brak kapitału konta). Kliknij „Wypełnij za mnie”, żeby pobrać SL/TP i kapitał z Hyperliquid.</p>
+    </section>
+  </section>
+
+  <!-- ======================= SETUPY ======================= -->
+  <section class="zakl ukryte" id="z-setupy">
+    <section class="karta">
+      <h2>Setupy z analiz Claude w Chrome <span class="podtytul" id="setupyPod"></span></h2>
+      <div id="setupyTabela"></div>
+    </section>
+  </section>
+</main>
+
+<!-- okno: opis trade'u / plan / trade ręczny -->
+<div class="okno ukryte" id="okno" role="dialog" aria-modal="true" aria-labelledby="oknoTytul">
+  <div class="okno-wn">
+    <header class="okno-gora"><h2 id="oknoTytul"></h2><button class="zamknij" id="oknoZamknij" aria-label="Zamknij">×</button></header>
+    <div id="oknoTresc"></div>
+  </div>
+</div>
+
+<script src="lab.js"></script>
+<script src="asystent-silnik.js"></script>
+<script src="dziennik-silnik.js"></script>
+<script src="dziennik.js"></script>
+</body>
+</html>

@@ -41,7 +41,7 @@ body::before {
 /* ---------------- karty na dole */
 .zakladki {
   position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--wys-zakladek) + var(--dol)); padding: 6px 6px var(--dol);
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; z-index: 5;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; z-index: 5;
   background: rgba(1, 16, 14, .82); border-top: 1px solid rgba(255, 255, 255, .09);
   -webkit-backdrop-filter: blur(18px) saturate(1.25); backdrop-filter: blur(18px) saturate(1.25);
 }
@@ -50,6 +50,7 @@ body::before {
   border: 0; background: transparent; color: var(--tekst3); font: 500 .66rem/1.1 var(--mono); letter-spacing: -.01em; border-radius: 12px; cursor: pointer; padding: 4px 2px;
 }
 .zakladki .ik { width: 22px; height: 22px; background: currentColor; -webkit-mask: var(--ik) center / contain no-repeat; mask: var(--ik) center / contain no-repeat; }
+#zakl-dziennik { --ik: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 7v14'/><path d='M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z'/></svg>"); }
 #zakl-panel { --ik: var(--ik-panel); } #zakl-asystent { --ik: var(--ik-asystent); } #zakl-laboratorium { --ik: var(--ik-laboratorium); } #zakl-wiecej { --ik: var(--ik-wiecej); }
 .zakladki button[aria-selected="true"] { color: var(--akcent); font-weight: 700; }
 .zakladki button[aria-selected="true"] .ik { filter: drop-shadow(0 0 6px rgba(67, 240, 198, .7)); }

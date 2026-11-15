@@ -192,13 +192,25 @@
       }
       return odp(200, PUSTY_RSS);   // serwisy z newsami nie pozwalają telefonowi pobierać ich wprost – nagłówki są w Centrum na komputerze
     }
+    // Dziennik tradera: kopia z komputera w Twoim prywatnym Firebase – czyta i zapisuje zalogowana powłoka aplikacji
+    if (/\/api\/dziennik(\/wpisy)?$/.test(sciezka)) {
+      const C = window.parent !== window && window.parent.CHMURA;
+      if (!C) return odp(503, 'Dziennik działa w aplikacji po zalogowaniu.');
+      try {
+        if (/\/wpisy$/.test(sciezka) && metoda === 'POST') { await C.zapisz('dziennik-wpisy', JSON.parse(String((opcje && opcje.body) || '{}'))); return odp(200, 'ok'); }
+        if (metoda === 'GET') {
+          const [trade, wpisy, chrome] = await Promise.all([C.pobierz('dziennik-trade'), C.pobierz('dziennik-wpisy'), C.pobierz('dziennik-chrome')]);
+          return odp(200, { trade, wpisy, chrome });
+        }
+      } catch (e) { return odp(503, 'Dziennik z chmury: ' + (e && e.message)); }
+    }
     return null;
   }
 
   window.fetch = async function (wejscie, opcje) {
     let url;
     try { url = new URL(typeof wejscie === 'string' ? wejscie : wejscie.url, location.href); } catch (e) { return oryginalnyFetch(wejscie, opcje); }
-    if (url.origin === location.origin && /\/(api\/(dane|pobierz|zapisz|zewn)|dane\/.+\.json|wyniki\/[\w.-]+\.json)$/.test(url.pathname)) {
+    if (url.origin === location.origin && /\/(api\/(dane|pobierz|zapisz|zewn|dziennik|dziennik\/wpisy)|dane\/.+\.json|wyniki\/[\w.-]+\.json)$/.test(url.pathname)) {
       try {
         const o = await obsluz(url, opcje);
         if (o) return o;

@@ -248,6 +248,9 @@
     if (!S.hist || !S.live) return;
     const B = biezacy();
     renderTeraz(B); renderPoziomy(B); renderUklad(); renderDzwignie(); renderWiarygodnosc(); renderDziennik();
+    // dla karty „Twoje trade'y” (asystent-dziennik.js): stan tylko do odczytu
+    window.ASYSTENT_STAN = { hist: S.hist, live: S.live, L: S.L, decyzja: B.dec };
+    document.dispatchEvent(new CustomEvent('asystent-odswiezony'));
     const L2 = S.live;
     stan('zywe', `HL na żywo · świeca ${S.hist.dane.interwal} ${godz(L2.czasSwiecy)} · następna ${godz(L2.czasSwiecy + S.hist.ms)}`);
     $('cenaTytul').textContent = cena$(L2.cena);
