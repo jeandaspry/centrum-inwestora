@@ -420,6 +420,13 @@
     return { ogol, porownania: out, zasady, czyste: DZ.grupa(czyste), kiedy: DZ.grupa(z.filter(DZ.zgodneKiedy)), wyjscia, oplatyUdzial };
   };
 
+  // ------------------------------------------------------------------ podsumowanie jednego dnia (karta „Dzień”)
+  DZ.podsumowanieDnia = function (tt) {
+    const z = tt.filter(t => !t.otwarta);
+    return { n: tt.length, zamkniete: z.length, netto: z.reduce((s, t) => s + t.netto, 0), wygrane: z.filter(t => t.netto > 0).length,
+      oplaty: z.reduce((s, t) => s + t.oplaty, 0), zlamane: tt.filter(t => t.zasady && Object.values(t.zasady).some(x => x.ok === false)).length };
+  };
+
   // ------------------------------------------------------------------ do Asystenta: dziś i ostatnie trade'y (dyscyplina na żywo)
   DZ.dzis = function (lista, teraz) {
     teraz = teraz || Date.now();

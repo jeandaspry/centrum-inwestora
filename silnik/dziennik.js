@@ -160,107 +160,207 @@
   $('zakladki').addEventListener('click', (e) => { const a = e.target.closest('[data-z]'); if (!a) return; e.preventDefault(); zakladka(a.dataset.z); });
 
   function rysuj() {
-    rysujKafle(); rysujDzis(); rysujPlany(); rysujListe(); rysujWnioski(); rysujZasady(); rysujSetupy();
+    rysujPrzeglad(); rysujDzis(); rysujPlany(); rysujListe(); rysujWnioski(); rysujZasady(); rysujSetupy();
     if (S.zakl === 'wnioski') rysujKrzywa();
   }
-  function rysujKafle() {
-    const o = S.wn.ogol, z = S.lista.filter(t => !t.otwarta), czyste = S.wn.czyste;
+  const odmiana = (n, a, b, c) => (n === 1 ? a : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? b : c);
+  const ileTrade = (n) => n + ' ' + odmiana(n, 'trade', 'trade\'y', 'trade\'ów');
+  const godzina = (t) => new Date(t).toLocaleTimeString('pl-PL', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit' });
+  const dzienLadnie = (d) => { const x = new Date(d + 'T12:00:00Z'); const dzis = DZ.dzien(Date.now()), wczoraj = DZ.dzien(Date.now() - 86400000);
+    const n = x.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }); return d === dzis ? 'Dziś · ' + n : d === wczoraj ? 'Wczoraj · ' + n : n.charAt(0).toUpperCase() + n.slice(1); };
+  const rynekLadnie = (r) => String(r || '').replace(/^KF:/, 'Kraken Futures ');
+
+  // wykres liniowy (mini w przeglądzie i duży w Wnioskach): serie [{dane, kolor, wypelnij}]
+  function wykresLinia(cv, serie, o = {}) {
+    if (!cv || !cv.clientWidth) return;
+    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; cv.width = W * dpr; cv.height = H * dpr;
+    const c = cv.getContext('2d'); c.scale(dpr, dpr); c.clearRect(0, 0, W, H);
+    const wsz = serie.flatMap(s => s.dane); if (wsz.length < 2) return;
+    const lo = Math.min(0, ...wsz), hi = Math.max(0, ...wsz);
+    const L = o.L || 0, P = o.P || 0, G = o.G || 6, D = o.D || 6, n = Math.max(...serie.map(s => s.dane.length));
+    const x = (i) => L + i / Math.max(1, n - 1) * (W - L - P), y = (v) => G + (hi - v) / (hi - lo || 1) * (H - G - D);
+    if (o.siatka) {
+      c.font = '600 11px "JetBrains Mono", monospace'; c.fillStyle = 'rgba(255,255,255,.4)'; c.textAlign = 'right';
+      for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4; c.strokeStyle = 'rgba(255,255,255,.06)'; c.beginPath(); c.moveTo(L, y(v)); c.lineTo(W - P, y(v)); c.stroke(); c.fillText(Math.round(v) + ' $', L - 6, y(v) + 4); }
+      c.textAlign = 'left';
+    }
+    c.save(); c.strokeStyle = 'rgba(255,255,255,.28)'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(L, y(0)); c.lineTo(W - P, y(0)); c.stroke(); c.restore();
+    for (const s of serie) {
+      const sciezka = () => { c.beginPath(); s.dane.forEach((v, i) => (i ? c.lineTo(x(i), y(v)) : c.moveTo(x(i), y(v)))); };
+      if (s.wypelnij) {
+        const gr = c.createLinearGradient(0, G, 0, H - D); gr.addColorStop(0, s.wypelnij); gr.addColorStop(1, 'rgba(0,0,0,0)');
+        sciezka(); c.lineTo(x(s.dane.length - 1), y(0)); c.lineTo(x(0), y(0)); c.closePath(); c.fillStyle = gr; c.fill();
+      }
+      c.strokeStyle = s.kolor; c.lineWidth = s.grubosc || 2.2; c.lineJoin = 'round'; c.lineCap = 'round'; sciezka(); c.stroke();
+      const ost = s.dane[s.dane.length - 1], xx = x(s.dane.length - 1), yy = y(ost);
+      c.fillStyle = s.kolor; c.beginPath(); c.arc(xx, yy, 3.5, 0, Math.PI * 2); c.fill();
+      if (o.etykiety) {
+        const t = usd(ost); c.font = '700 12px "JetBrains Mono", monospace'; const sz = c.measureText(t).width + 12;
+        c.fillStyle = 'rgba(2,20,17,.92)'; c.strokeStyle = s.kolor; c.lineWidth = 1;
+        const bx = Math.min(W - sz - 2, xx + 8), by = yy - 11; c.beginPath(); c.roundRect ? c.roundRect(bx, by, sz, 22, 7) : c.rect(bx, by, sz, 22); c.fill(); c.stroke();
+        c.fillStyle = s.kolor; c.fillText(t, bx + 6, by + 15);
+      }
+    }
+  }
+
+  function rysujPrzeglad() {
+    const o = S.wn.ogol, z = S.lista.filter(t => !t.otwarta).sort((a, b) => a.zamkniecie - b.zamkniecie), czyste = S.wn.czyste;
     const opis = z.filter(t => t.uzupelniony).length;
+    let acc = 0; const seria = [0, ...z.map(t => (acc += t.netto))];
+    $('hero').className = 'hero-wynik' + (o.netto < 0 ? ' strata' : '');
+    $('hero').innerHTML = `<div class="et">Wynik netto · ${ileTrade(o.n)}</div>
+      <div class="kwota ${kl(o.netto)}">${usd(o.netto)}</div>
+      <div class="opis">średnio <b class="num ${kl(o.srednio)}">${usd(o.srednio)}</b> na trade${z.length ? ' · od ' + new Date(z[0].otwarcie).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' }) : ''}</div>
+      <div class="w-mini" id="heroWykres"></div>`;
+    if (S.wHero) { S.wHero.usun(); S.wHero = null; }
+    if (window.DZW && DZW.dostepne()) { let s = 0; S.wHero = DZW.mini($('heroWykres')); S.wHero.ustaw([{ t: (z[0] ? z[0].otwarcie : Date.now()) - 60000, v: 0 }, ...z.map(t => ({ t: t.zamkniecie, v: (s += t.netto) }))], o.netto >= 0); }
+    else wykresLinia($('heroWykres'), [{ dane: seria, kolor: o.netto >= 0 ? '#43f0c6' : '#ff8a8a', wypelnij: o.netto >= 0 ? 'rgba(67,240,198,.30)' : 'rgba(255,107,107,.26)' }]);
+    const kafel = (et, w, p) => `<div class="kafel"><div class="et">${et}</div><div class="wart">${w}</div><div class="pod">${p}</div></div>`;
     $('kafle').innerHTML = [
-      ['Trade\'y', String(o.n), `${proc(o.skut)} na plus`],
-      ['Wynik netto', `<span class="${kl(o.netto)}">${usd(o.netto)}</span>`, `średnio ${usd(o.srednio)}`],
-      ['Zysk / strata', `${usd(o.srW, false)} / ${usd(o.srP, false)}`, o.prog ? `potrzebujesz ${proc(o.prog)} trafień` : '–'],
-      ['Opłaty', usd(-o.oplaty), o.netto + o.oplaty > 0 && o.netto < 0 ? `bez opłat byłoby ${usd(o.netto + o.oplaty)}` : S.wn.oplatyUdzial ? `${proc(S.wn.oplatyUdzial)} straty netto` : ''],
-      ['Zgodne z zasadami 4–7', `${S.wn.kiedy.n} <span class="b-male">z ${o.n}</span>`, `${usd(S.wn.kiedy.netto)} · wszystkie 9: ${czyste.n}`],
-      ['Opisane', `${opis}/${z.length}`, opis < z.length ? 'kliknij „Wypełnij za mnie”' : 'wszystkie']
-    ].map(([et, w, p]) => `<div class="kafel"><div class="et">${et}</div><div class="wart">${w}</div><div class="pod">${p}</div></div>`).join('');
+      kafel('Skuteczność', proc(o.skut), `${o.wygrane} z ${o.n} na plus`),
+      kafel('Średni zysk / strata', `<span class="plus">${usd(o.srW, false)}</span><small> / </small><span class="minus">${usd(o.srP, false)}</span>`, o.prog ? `do zera potrzeba ${proc(o.prog)} trafień` : '–'),
+      kafel('Opłaty', `<span class="minus">${usd(-o.oplaty)}</span>`, o.netto < 0 && o.netto + o.oplaty > 0 ? `bez nich byłoby <b class="plus">${usd(o.netto + o.oplaty)}</b>` : S.wn.oplatyUdzial ? `${proc(S.wn.oplatyUdzial)} straty netto` : ''),
+      kafel('Zgodne z zasadami 4–7', `${S.wn.kiedy.n}<small> / ${o.n}</small>`, `razem <b class="${kl(S.wn.kiedy.netto)}">${usd(S.wn.kiedy.netto)}</b>`),
+      kafel('Wszystkie 9 zasad', `${czyste.n}<small> / ${o.n}</small>`, czyste.n ? `razem <b class="${kl(czyste.netto)}">${usd(czyste.netto)}</b>` : 'z SL i ryzykiem 1–2% – jeszcze żaden'),
+      kafel('Opisane', `${opis}<small> / ${z.length}</small>`, opis < z.length ? 'kliknij „Wypełnij za mnie”' : 'wszystkie trade\'y')
+    ].join('');
+  }
+  // ---- karta „Dzień”: dziś albo wybrany dzień z paska ostatnich dni (dni z trade'ami + dziś)
+  function dniZTrade() {
+    const m = new Map();
+    for (const t of S.lista) { const x = m.get(t.dzienPL) || { d: t.dzienPL, tt: [] }; x.tt.push(t); m.set(t.dzienPL, x); }
+    const dzis = DZ.dzien(Date.now()); if (!m.has(dzis)) m.set(dzis, { d: dzis, tt: [] });
+    return [...m.values()].sort((a, b) => (a.d < b.d ? -1 : 1)).map(x => Object.assign(x, DZ.podsumowanieDnia(x.tt)));
   }
   function rysujDzis() {
-    const d = DZ.dzis(S.lista);
-    const h = (t) => new Date(t).toLocaleTimeString('pl-PL', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit' });
-    const przerwy = d.przerwy.map(p => `<span class="znacznik uwaga">przerwa do ${h(p.do)} (zasada ${p.zasada}: ${E_(p.powod)})</span>`).join(' ');
-    $('kartaDzis').innerHTML = `<h2>Dziś <span class="podtytul">zasady na bieżąco</span></h2>
-      <div class="flagi" style="gap:8px">
-        <span class="znacznik ${d.trade > d.limit ? 'zle' : d.trade === d.limit ? 'uwaga' : 'ok'}">trade'y dziś: ${d.trade} / ${d.limit}</span>
-        <span class="znacznik ${d.netto < 0 ? 'zle' : 'info'}">wynik dziś ${usd(d.netto)}</span>
-        ${d.otwarte.length ? `<span class="znacznik info">otwarte: ${d.otwarte.map(t => t.strona.toUpperCase() + ' ' + E_(t.rynek)).join(', ')}</span>` : ''}
-        ${przerwy || '<span class="znacznik ok">bez wymaganej przerwy</span>'}
-      </div>`;
+    const dni = dniZTrade(), dzis = DZ.dzien(Date.now());
+    if (!S.dzien || !dni.some(x => x.d === S.dzien)) S.dzien = dzis;
+    const i = dni.findIndex(x => x.d === S.dzien), D = dni[i], toDzis = S.dzien === dzis;
+    const pole = (k, ik, tyt, op) => `<div class="dzis-pole ${k}"><span class="ikona" aria-hidden="true">${ik}</span><div><b>${tyt}</b><span>${op}</span></div></div>`;
+    const limit = 2;
+    const pola = [
+      pole(D.n > limit ? 'zle' : D.n === limit ? 'uwaga' : 'ok', '🎯', `${ileTrade(D.n)}${toDzis ? ` z ${limit}` : ''}`, D.n > limit ? `ponad limit ${limit} dziennie (zasada 7)` : 'limit dzienny – zasada 7'),
+      pole(D.netto < 0 ? 'zle' : D.n ? 'ok' : '', D.netto < 0 ? '📉' : '📈', `<span class="num ${kl(D.netto)}">${usd(D.netto)}</span>`, toDzis ? 'wynik dziś' : 'wynik tego dnia'),
+      ...(D.n ? [pole(D.wygrane * 2 >= D.zamkniete ? 'ok' : 'uwaga', '✔️', `${D.wygrane} z ${D.zamkniete} na plus`, `opłaty ${usd(-D.oplaty)}`)] : []),
+      ...(D.n ? [pole(D.zlamane ? 'zle' : 'ok', D.zlamane ? '⚠️' : '🛡️', D.zlamane ? `${D.zlamane} ${odmiana(D.zlamane, 'trade łamie', 'trade\'y łamią', 'trade\'ów łamie')} zasady` : 'bez złamanych zasad', 'zasady metody v3')] : [])
+    ];
+    if (toDzis) {
+      const d = DZ.dzis(S.lista);
+      pola.push(...(d.przerwy.length ? d.przerwy.map(p => pole('uwaga', '⏸️', `przerwa do ${godzina(p.do)}`, `zasada ${p.zasada}: ${E_(p.powod)}`)) : [pole('ok', '✅', 'bez wymaganej przerwy', 'zasady 5–6 spełnione')]));
+      if (d.otwarte.length) pola.push(pole('info', '🔓', d.otwarte.map(t => t.strona.toUpperCase() + ' ' + E_(rynekLadnie(t.rynek))).join(', '), 'otwarte teraz'));
+    }
+    const krotko = (d) => { const x = new Date(d + 'T12:00:00Z'); return { dzien: x.toLocaleDateString('pl-PL', { weekday: 'short' }), data: x.toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' }) }; };
+    const pasek = dni.slice().reverse().map(x => { const k = krotko(x.d);
+      return `<button class="dzien-chip ${x.d === S.dzien ? 'wl' : ''} ${x.n ? kl(x.netto) : 'pusty'}" data-dzien="${x.d}" title="${E_(dzienLadnie(x.d))}">
+        <span class="dz">${x.d === dzis ? 'dziś' : k.dzien}</span><span class="dt">${k.data}</span><span class="wn">${x.n ? usd(x.netto) : '–'}</span><span class="ile">${x.n ? ileTrade(x.n) : 'brak'}</span></button>`; }).join('');
+    $('kartaDzis').innerHTML = `<div class="sekcja-tytul"><h2>${toDzis ? 'Dziś' : 'Dzień'}</h2>
+        <div class="dzien-nawig"><button class="maly" data-krok="-1" ${i <= 0 ? 'disabled' : ''} aria-label="Dzień wcześniej">‹</button><span>${E_(dzienLadnie(S.dzien))}</span><button class="maly" data-krok="1" ${i >= dni.length - 1 ? 'disabled' : ''} aria-label="Dzień później">›</button></div></div>
+      <div class="dni-pasek" id="dniPasek">${pasek}</div>
+      <div class="dzis">${pola.join('')}</div>
+      ${D.n ? `<div class="przyciski" style="margin-top:12px"><button id="pokazDzien">${S.dzienFiltr === S.dzien ? '✕ Pokaż wszystkie dni' : '↓ Pokaż trade\'y z tego dnia'}</button></div>` : ''}`;
   }
+  $('kartaDzis').addEventListener('click', (e) => {
+    const ch = e.target.closest('[data-dzien]'), kr = e.target.closest('[data-krok]');
+    if (ch) { S.dzien = ch.dataset.dzien; if (S.dzienFiltr) S.dzienFiltr = S.dzien; rysujDzis(); rysujListe(); return; }
+    if (kr) { const dni = dniZTrade(), i = dni.findIndex(x => x.d === S.dzien), j = i + Number(kr.dataset.krok); if (dni[j]) { S.dzien = dni[j].d; if (S.dzienFiltr) S.dzienFiltr = S.dzien; rysujDzis(); rysujListe(); } return; }
+    if (e.target.closest('#pokazDzien')) {
+      S.dzienFiltr = S.dzienFiltr === S.dzien ? null : S.dzien; rysujDzis(); rysujListe();
+      if (S.dzienFiltr) $('lista').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
   function rysujPlany() {
     const pl = S.lista.plany || [];
-    $('plany').innerHTML = pl.length ? `<p class="male" style="margin:0 0 6px">Plany czekające na wejście (dopasują się same do trade'u z giełdy w ciągu 12 h):</p>` + pl.map(p =>
-      `<button class="wiersz plan-wiersz" data-plan="${E_(p.id)}"><span class="data c-data"><b>${kiedy(p.czas)}</b><span>plan</span></span>
-        <span class="c-kier"><span class="kier ${p.strona}">${p.strona.toUpperCase()}</span> <small>${E_(p.rynek)}</small></span>
-        <span class="ceny c-ceny">${cena(N(p.wejscie))}<br><span>SL ${cena(N(p.sl))} · TP ${cena(N(p.tp))}</span></span>
-        <span class="c-czas"></span><span class="wyn c-wyn"></span><span class="c-setup">${E_(p.setup || '')}</span><span class="flagi c-flagi"><span class="flaga">confidence ${fin(N(p.confidence)) ? N(p.confidence) : '–'}</span></span></button>`).join('') : '';
+    $('plany').innerHTML = pl.length ? `<p class="plany-tytul">Plany czekające na wejście · przypną się same do trade'u z giełdy w ciągu 12 h</p><div class="lista-trade" style="margin-bottom:16px">` + pl.map(p =>
+      `<button class="trade plan" data-plan="${E_(p.id)}">
+        <div class="kol-a"><span class="kier ${p.strona}">${p.strona.toUpperCase()}</span><span class="godz">${kiedy(p.czas)}</span></div>
+        <div class="kol-b"><div class="tytul">${E_(p.rynek)} <span class="cena-t">wejście ${cena(N(p.wejscie))}</span></div>
+          <div class="meta"><span>SL <span class="num">${cena(N(p.sl))}</span></span><span>TP <span class="num">${cena(N(p.tp))}</span></span>${p.setup ? `<span>setup ${E_(p.setup)}</span>` : ''}</div></div>
+        <div class="kol-c"><span class="flaga info">plan</span>${fin(N(p.confidence)) ? `<span class="r">pewność ${N(p.confidence)}</span>` : ''}</div></button>`).join('') + '</div>' : '';
   }
   const FILTRY = {
     wszystkie: () => true, puste: (t) => !t.uzupelniony && !t.otwarta, setup: (t) => !!t.setup, bezSetupu: (t) => !t.setup,
-    zasady: (t) => Object.values(t.zasady).some(z => z.ok === false), revenge: (t) => t.poStracie || t.zmianaKierunku
+    zasady: (t) => Object.values(t.zasady).some(z => z.ok === false), revenge: (t) => t.poStracie || t.zmianaKierunku,
+    plus: (t) => !t.otwarta && t.netto > 0, minus: (t) => !t.otwarta && t.netto <= 0
   };
   function flagiTrade(t) {
     const f = [];
     if (t.otwarta) f.push(['info', 'otwarty']);
     if (t.likwidacja) f.push(['zle', 'likwidacja']);
     if (t.poStracie) f.push(['zle', 'po stracie']);
-    if (t.zmianaKierunku) f.push(['zle', 'zmiana kier.']);
+    if (t.zmianaKierunku) f.push(['zle', 'zmiana kierunku']);
     if (t.poDuzymZysku) f.push(['uwaga', 'po dużym zysku']);
-    if (t.nrWDniu > 2) f.push(['uwaga', t.nrWDniu + '. dnia']);
+    if (t.nrWDniu > 2) f.push(['uwaga', t.nrWDniu + '. trade dnia']);
     const zl = Object.values(t.zasady).filter(z => z.ok === false).length;
-    f.push([zl ? 'zle' : 'ok', zl ? 'zasady ✗' + zl : 'zasady ✓']);
+    f.push([zl ? 'zle' : 'ok', zl ? 'zasady ✗ ' + zl : 'zasady ✓']);
     return f.map(([k, x]) => `<span class="flaga ${k}">${x}</span>`).join('');
+  }
+  function kartaTrade(t) {
+    const ws = t.uzupelniony ? (t.wpis.autoPola && t.wpis.autoPola.length && !t.wpis.recznieOpisany ? ['wpis-auto', '◐ opisany za Ciebie'] : ['wpis-pelny', '● opisany']) : ['wpis-pusty', '○ do opisania'];
+    return `<button class="trade ${t.otwarta ? '' : kl(t.netto)}" data-id="${E_(t.id)}">
+      <div class="kol-a"><span class="kier ${t.strona}">${t.strona.toUpperCase()}</span><span class="godz">${godzina(t.otwarcie)}</span></div>
+      <div class="kol-b"><div class="tytul">${E_(rynekLadnie(t.rynek))} <span class="cena-t">${cena(t.wejscie)} → ${cena(t.wyjscie)}</span></div>
+        <div class="meta"><span>⏱ <span class="num">${czas(t.czasMin)}</span></span>${t.dzwignia ? `<span>dźwignia <span class="num">~${Math.round(t.dzwignia)}×</span></span>` : ''}<span>SL <span class="num">${cena(t.sl)}</span></span><span>TP <span class="num">${cena(t.tp)}</span></span><span>${E_(t.gielda)}</span></div></div>
+      <div class="kol-c"><span class="kwota ${kl(t.netto)}">${t.otwarta ? 'otwarty' : usd(t.netto)}</span>${fin(t.R) ? `<span class="r">R ${(t.R >= 0 ? '+' : '') + nf(2).format(t.R)}</span>` : ''}</div>
+      <div class="flagi">${t.setup ? `<span class="flaga setup">setup ${E_(t.setup)}</span>` : ''}${flagiTrade(t)}<span class="flaga ${ws[0]}">${ws[1]}</span></div></button>`;
   }
   function rysujListe() {
     const f = FILTRY[S.filtr] || FILTRY.wszystkie;
-    document.querySelectorAll('#filtry button').forEach(b => b.classList.toggle('wl', b.dataset.f === S.filtr));
-    const l = S.lista.filter(f).slice().reverse();
-    $('listaPod').textContent = `${l.length} z ${S.lista.length}`;
-    const nag = `<div class="wiersz naglowek"><span>Wejście</span><span>Kierunek</span><span>Ceny · SL/TP</span><span>Czas</span><span style="text-align:right">Wynik</span><span>Setup · wpis</span><span>Flagi</span></div>`;
-    $('lista').innerHTML = !S.E ? '<div class="ramka uwaga">Brak eksportu trade\'ów z panelu. Otwórz panel inwestora (np. w Centrum) – zapisze go w ciągu minuty.</div>'
-      : nag + l.map(t => {
-        const ws = t.uzupelniony ? (t.wpis.autoPola && t.wpis.autoPola.length && !t.wpis.recznieOpisany ? ['auto', '◐ wypełniony za Ciebie'] : ['pelny', '● opisany']) : ['', '○ pusty'];
-        return `<button class="wiersz" data-id="${E_(t.id)}">
-          <span class="data c-data"><b>${kiedy(t.otwarcie)}</b><span>${E_(t.gielda)}</span></span>
-          <span class="c-kier"><span class="kier ${t.strona}">${t.strona.toUpperCase()}</span> <small>${E_(t.rynek)}</small></span>
-          <span class="ceny c-ceny">${cena(t.wejscie)} → ${cena(t.wyjscie)}<br><span>SL ${cena(t.sl)} · TP ${cena(t.tp)}</span></span>
-          <span class="c-czas">${czas(t.czasMin)}</span>
-          <span class="wyn c-wyn ${kl(t.netto)}">${t.otwarta ? 'otwarty' : usd(t.netto)}<small>${fin(t.R) ? 'R ' + (t.R >= 0 ? '+' : '') + nf(2).format(t.R) : t.dzwignia ? '~' + Math.round(t.dzwignia) + '× konta' : ''}</small></span>
-          <span class="c-setup">${t.setup ? '<b>' + E_(t.setup) + '</b>' : '<span class="b-male">bez setupu</span>'}<br><span class="wpis-stan ${ws[0]}">${ws[1]}</span></span>
-          <span class="flagi c-flagi">${flagiTrade(t)}</span></button>`;
-      }).join('');
+    document.querySelectorAll('#filtry button').forEach(b => {
+      b.classList.toggle('wl', b.dataset.f === S.filtr);
+      const ile = S.lista.filter(FILTRY[b.dataset.f] || FILTRY.wszystkie).length;
+      let s = b.querySelector('.ile'); if (!s) { s = document.createElement('span'); s.className = 'ile'; b.appendChild(s); } s.textContent = ile;
+    });
+    const l = S.lista.filter(f).filter(t => !S.dzienFiltr || t.dzienPL === S.dzienFiltr).slice().reverse();
+    $('listaPod').textContent = l.length === S.lista.length ? ileTrade(l.length) : `${l.length} z ${S.lista.length}`;
+    $('filtrDnia').innerHTML = S.dzienFiltr ? `<button class="flaga info" id="zdejmijDzien">tylko ${E_(dzienLadnie(S.dzienFiltr))} ✕</button>` : '';
+    if (!S.E) { $('lista').innerHTML = '<div class="pusto">Brak eksportu trade\'ów z panelu. Otwórz panel inwestora (np. w Centrum) – zapisze go w ciągu minuty.</div>'; return; }
+    if (!l.length) { $('lista').innerHTML = '<div class="pusto">Żaden trade nie pasuje do tego filtra.</div>'; return; }
+    const dni = new Map(); for (const t of l) { if (!dni.has(t.dzienPL)) dni.set(t.dzienPL, []); dni.get(t.dzienPL).push(t); }
+    $('lista').innerHTML = [...dni.entries()].map(([d, tt]) => { const nt = tt.filter(t => !t.otwarta).reduce((s, t) => s + t.netto, 0);
+      return `<div class="dzien-naglowek"><span>${E_(dzienLadnie(d))}</span><span>${ileTrade(tt.length)} · <span class="kwota num ${kl(nt)}">${usd(nt)}</span></span></div>` + tt.map(kartaTrade).join(''); }).join('');
   }
   $('filtry').addEventListener('click', (e) => { const b = e.target.closest('[data-f]'); if (!b) return; S.filtr = b.dataset.f; pam.pisz('filtr', S.filtr); rysujListe(); });
+  $('filtrDnia').addEventListener('click', (e) => { if (e.target.closest('#zdejmijDzien')) { S.dzienFiltr = null; rysujDzis(); rysujListe(); } });
   $('lista').addEventListener('click', (e) => { const b = e.target.closest('[data-id]'); if (b) otworzTrade(b.dataset.id); });
   $('plany').addEventListener('click', (e) => { const b = e.target.closest('[data-plan]'); if (b) otworzPlan(b.dataset.plan); });
 
   // ------------------------------------------------------------------ okno trade'u
   const okno = { pokaz(tytul, html) { $('oknoTytul').innerHTML = tytul; $('oknoTresc').innerHTML = html; $('okno').classList.remove('ukryte'); document.body.style.overflow = 'hidden'; },
-    zamknij() { $('okno').classList.add('ukryte'); document.body.style.overflow = ''; } };
+    zamknij() { $('okno').classList.add('ukryte'); document.body.style.overflow = ''; if (S.wTrade) { S.wTrade.usun(); S.wTrade = null; } } };
   $('oknoZamknij').addEventListener('click', () => okno.zamknij());
   $('okno').addEventListener('click', (e) => { if (e.target === $('okno')) okno.zamknij(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('okno').classList.contains('ukryte')) okno.zamknij(); });
 
-  const chipy = (nazwa, opcje, wybrane) => `<div class="chipy" data-chipy="${nazwa}">${opcje.map(o => `<button type="button" class="${(wybrane || []).includes(o) ? 'wl' : ''}" data-v="${E_(o)}">${E_(o)}</button>`).join('')}</div>`;
+  const IKONY_EMOCJI = { 'spokój': '😌', 'pewność siebie': '😎', 'FOMO': '🏃', 'strach': '😨', 'chciwość': '🤑', 'nuda': '🥱', 'zemsta': '😤', 'zmęczenie': '😴', 'presja': '⏱️' };
+  const chipy = (nazwa, opcje, wybrane, ikony) => `<div class="chipy ${nazwa}" data-chipy="${nazwa}">${opcje.map(o => `<button type="button" class="${(wybrane || []).includes(o) ? 'wl' : ''}" data-v="${E_(o)}">${ikony && ikony[o] ? ikony[o] + ' ' : ''}${E_(o)}</button>`).join('')}</div>`;
   const autoZn = (w, pole) => (w.autoPola || []).includes(pole) ? ' <span class="auto-zn">auto</span>' : '';
+  const OPIS_OCEN = { A: 'wszystko wg planu', B: 'drobne odstępstwo', C: 'kilka błędów', D: 'złamane zasady' };
   function formularz(w, t) {
     const setupy = (S.C && S.C.setupy) || [];
+    const conf = fin(N(w.confidence)) ? N(w.confidence) : null;
     return `<div class="pola">
-      <label class="pole">Setup${autoZn(w, 'setup')}<select id="f-setup"><option value="">bez setupu</option>${setupy.map(s => `<option value="${E_(s.id)}" ${w.setup === s.id ? 'selected' : ''}>${E_(s.id)} ${E_(s.data.slice(5))} ${E_(s.kierunek)} ${E_(s.typ)} (${cena(s.wejscie)})${t && t.setupAuto === s.id ? ' ← pasuje' : ''}</option>`).join('')}</select></label>
+      <label class="pole">Setup${autoZn(w, 'setup')}<select id="f-setup"><option value="">bez setupu</option>${setupy.map(s => `<option value="${E_(s.id)}" ${w.setup === s.id ? 'selected' : ''}>${E_(s.id)} · ${E_(s.data.slice(8, 10) + '.' + s.data.slice(5, 7))} · ${E_(s.kierunek)} · ${E_(s.typ)} (${cena(s.wejscie)})${t && t.setupAuto === s.id ? ' ← pasuje' : ''}</option>`).join('')}</select></label>
       <label class="pole">Etykieta${autoZn(w, 'etykieta')}<select id="f-etykieta">${['', 'z analizy', 'bez analizy', 'prawdopodobny revenge', 'seria po dużym zysku', 'inne'].map(o => `<option ${w.etykieta === o ? 'selected' : ''} value="${E_(o)}">${o || '–'}</option>`).join('')}</select></label>
-      <label class="pole">Ocena procesu${autoZn(w, 'ocena')}<select id="f-ocena">${['', ...DZ.OCENY].map(o => `<option ${w.ocena === o ? 'selected' : ''} value="${o}">${o || '–'}${o === 'A' ? ' – wszystko wg planu' : o === 'D' ? ' – złamane zasady' : ''}</option>`).join('')}</select></label>
-      <label class="pole">Plan wejścia${autoZn(w, 'planWejscie')}<input id="f-planWejscie" inputmode="decimal" value="${fin(N(w.planWejscie)) ? N(w.planWejscie) : ''}"></label>
-      <label class="pole">Stop loss${autoZn(w, 'sl')}<input id="f-sl" inputmode="decimal" value="${fin(N(w.sl)) ? N(w.sl) : ''}"></label>
-      <label class="pole">Take profit${autoZn(w, 'tp')}<input id="f-tp" inputmode="decimal" value="${fin(N(w.tp)) ? N(w.tp) : ''}"></label>
+      <div class="pole">Ocena procesu${autoZn(w, 'ocena')}<div class="oceny" data-oceny>${DZ.OCENY.map(o => `<button type="button" data-v="${o}" class="${w.ocena === o ? 'wl' : ''}" title="${OPIS_OCEN[o]}">${o}</button>`).join('')}</div><span class="b-male" id="f-ocenaOpis">${w.ocena ? OPIS_OCEN[w.ocena] : 'A – wszystko wg planu … D – złamane zasady'}</span></div>
+      <label class="pole">Plan wejścia${autoZn(w, 'planWejscie')}<input id="f-planWejscie" inputmode="decimal" value="${fin(N(w.planWejscie)) ? N(w.planWejscie) : ''}" placeholder="np. 78 650"></label>
+      <label class="pole">Stop loss${autoZn(w, 'sl')}<input id="f-sl" inputmode="decimal" value="${fin(N(w.sl)) ? N(w.sl) : ''}" placeholder="cena SL"></label>
+      <label class="pole">Take profit${autoZn(w, 'tp')}<input id="f-tp" inputmode="decimal" value="${fin(N(w.tp)) ? N(w.tp) : ''}" placeholder="cena TP"></label>
       <label class="pole szer">Powód wejścia${autoZn(w, 'powod')}<textarea id="f-powod" placeholder="Dlaczego tu? Jaki sygnał, poziom, kontekst?">${E_(w.powod || '')}</textarea></label>
-      <div class="pole szer">Confidence – jak bardzo byłeś pewny (0–100)${autoZn(w, 'confidence')}<div class="suwak"><input type="range" id="f-confR" min="0" max="100" step="5" value="${fin(N(w.confidence)) ? N(w.confidence) : 50}"><input id="f-conf" style="width:80px" inputmode="numeric" value="${fin(N(w.confidence)) ? N(w.confidence) : ''}" placeholder="–"></div></div>
-      <div class="pole szer">Emocje${chipy('emocje', DZ.EMOCJE, w.emocje)}</div>
+      <div class="pole szer">Pewność (confidence) – jak bardzo byłeś pewny, 0–100${autoZn(w, 'confidence')}
+        <div class="suwak"><input type="range" id="f-confR" min="0" max="100" step="5" value="${conf === null ? 50 : conf}" aria-label="Pewność"><input id="f-conf" class="wartosc-conf" inputmode="numeric" value="${conf === null ? '' : conf}" placeholder="–" aria-label="Pewność w liczbach"></div></div>
+      <div class="pole szer">Emocje${chipy('emocje', DZ.EMOCJE, w.emocje, IKONY_EMOCJI)}</div>
       <div class="pole szer">Błędy${autoZn(w, 'bledy')}${chipy('bledy', DZ.BLEDY, w.bledy)}</div>
-      <label class="pole szer">Notatka / lekcja${autoZn(w, 'notatka')}<textarea id="f-notatka" placeholder="Co zrobiłbyś inaczej?">${E_(w.notatka || '')}</textarea></label>
+      <label class="pole szer">Notatka / lekcja${autoZn(w, 'notatka')}<textarea id="f-notatka" placeholder="Co zrobiłbyś inaczej następnym razem?">${E_(w.notatka || '')}</textarea></label>
     </div>`;
   }
   function podepnijFormularz() {
     document.querySelectorAll('#oknoTresc [data-chipy] button').forEach(b => b.addEventListener('click', () => b.classList.toggle('wl')));
+    document.querySelectorAll('#oknoTresc [data-oceny] button').forEach(b => b.addEventListener('click', () => {
+      const wl = !b.classList.contains('wl');
+      b.parentElement.querySelectorAll('button').forEach(x => x.classList.remove('wl'));
+      if (wl) b.classList.add('wl');
+      const op = $('f-ocenaOpis'); if (op) op.textContent = wl ? OPIS_OCEN[b.dataset.v] : 'bez oceny';
+    }));
     const r = $('f-confR'), n = $('f-conf');
     if (r && n) { r.addEventListener('input', () => { n.value = r.value; }); n.addEventListener('input', () => { if (fin(N(n.value))) r.value = N(n.value); }); }
   }
@@ -268,7 +368,8 @@
     const w = Object.assign({}, stary || {});
     const pole = (id) => { const e = $('f-' + id); return e ? e.value.trim() : undefined; };
     const liczba = (id) => { const v = N(pole(id)); return fin(v) ? v : null; };
-    w.setup = pole('setup') || ''; w.etykieta = pole('etykieta') || ''; w.ocena = pole('ocena') || '';
+    const oc = document.querySelector('#oknoTresc [data-oceny] button.wl');
+    w.setup = pole('setup') || ''; w.etykieta = pole('etykieta') || ''; w.ocena = oc ? oc.dataset.v : '';
     w.planWejscie = liczba('planWejscie'); w.sl = liczba('sl'); w.tp = liczba('tp');
     w.powod = pole('powod') || ''; w.notatka = pole('notatka') || '';
     const c = liczba('conf'); w.confidence = c === null ? null : Math.max(0, Math.min(100, c));
@@ -284,33 +385,39 @@
     const w = Object.assign({}, t.wpis);
     const a = t.auto.asystent, z = t.auto.zlecenia, r = t.auto.ruch;
     const wart = (et, w2) => `<div><div class="et">${et}</div><div class="w">${w2}</div></div>`;
-    const zasadyHtml = DZ.ZASADY.map(zz => { const x = t.zasady[zz.kod]; return `<div><span class="${x.ok === true ? 't' : x.ok === false ? 'f' : 'n'}">${x.ok === true ? '✓' : x.ok === false ? '✗' : '?'}</span><span><b>${zz.kod}.</b> ${E_(zz.krotko)} <span class="b-male">– ${E_(x.opis)}</span></span></div>`; }).join('');
-    const tytul = `<span class="kier ${t.strona}">${t.strona.toUpperCase()}</span> ${E_(t.rynek)} · ${kiedy(t.otwarcie)} · <span class="${kl(t.netto)}">${t.otwarta ? 'otwarty' : usd(t.netto)}</span>${fin(t.R) ? ` <span class="znacznik ${t.R >= 0 ? 'ok' : 'zle'}">R ${nf(2).format(t.R)}</span>` : ''}`;
+    const zasadyHtml = DZ.ZASADY.map(zz => { const x = t.zasady[zz.kod]; const k = x.ok === true ? 't' : x.ok === false ? 'f' : 'n';
+      return `<div><span class="ikonka ${k}">${x.ok === true ? '✓' : x.ok === false ? '✗' : '?'}</span><span><b>${zz.kod}. ${E_(zz.krotko)}</b><span class="opis-z">${E_(x.opis)}</span></span></div>`; }).join('');
+    const tytul = `<span class="kier ${t.strona}">${t.strona.toUpperCase()}</span><span>${E_(rynekLadnie(t.rynek))}</span><span class="b-male">${kiedy(t.otwarcie)} · ${E_(t.gielda)}</span>
+      <span class="kwota num ${kl(t.netto)}">${t.otwarta ? 'otwarty' : usd(t.netto)}</span>${fin(t.R) ? `<span class="flaga ${t.R >= 0 ? 'ok' : 'zle'}">R ${(t.R >= 0 ? '+' : '') + nf(2).format(t.R)}</span>` : ''}`;
+    const asystentHtml = a ? `<p class="tekst-blok"><span class="decyzja-mala ${a.decyzja === 'LONG' ? 'long' : a.decyzja === 'SHORT' ? 'short' : 'czekaj'}">${a.decyzja}</span>
+        <span class="b-male" style="margin-left:8px">przy ${a.L}× · świeca 1h ${kiedy(a.swieca)}</span></p><p class="tekst-blok">${E_(DZ.powodZAsystenta(a, t.strona))}</p>`
+      : '<p class="tekst-blok">Jeszcze nie policzone – kliknij „Wypełnij za mnie”.</p>';
+    const chromeHtml = t.chrome || t.notatkaChrome || t.setupDane ? `<h3 style="margin-top:14px">Dziennik Claude w Chrome</h3>
+      ${t.chrome ? `<p class="tekst-blok"><b>${E_(t.chrome.id)}</b> · ${E_(t.chrome.etykieta)} · ${E_(t.chrome.trend)}${t.chrome.notatka ? '<br>' + E_(t.chrome.notatka) : ''}</p>` : ''}
+      ${t.setupDane ? `<p class="tekst-blok"><b>Setup ${E_(t.setupDane.id)}</b> – ${E_(t.setupDane.typ)}: plan <span class="num">${cena(t.setupDane.wejscie)}</span> / SL <span class="num">${cena(t.setupDane.sl)}</span> / TP <span class="num">${cena(t.setupDane.tp)}</span> (R:R ${t.setupDane.rr}), ${E_(t.setupDane.status)}${fin(t.setupDane.wynik_r) ? ' <b class="' + kl(t.setupDane.wynik_r) + '">' + nf(2).format(t.setupDane.wynik_r) + 'R</b>' : ''}${t.setupAuto === t.setupDane.id && !(S.W.wpisy[id] || {}).setup ? ' <span class="auto-zn">dopasowany</span>' : ''}</p>` : ''}
+      ${t.notatkaChrome ? `<p class="tekst-blok">${E_(t.notatkaChrome.notatka)}</p>` : ''}` : '';
+    const planHtml = t.plan ? `<h3 style="margin-top:14px">Plan sprzed wejścia</h3><p class="tekst-blok">${kiedy(t.plan.czas)} · wejście <span class="num">${cena(N(t.plan.wejscie))}</span>, SL <span class="num">${cena(N(t.plan.sl))}</span>, TP <span class="num">${cena(N(t.plan.tp))}</span>${t.plan.powod ? '<br>' + E_(t.plan.powod) : ''}</p>` : '';
     okno.pokaz(tytul, `
       <div class="dwie-kol">
-        <div class="blok"><h3>Wykres 15m <span class="b-male">wejście, wyjście, SL/TP, wypełnienia</span></h3><canvas class="wykres" id="wykres"></canvas><p class="b-male" id="wykresOpis" style="margin:6px 0 0"></p></div>
-        <div class="blok"><h3>Z giełdy (${E_(t.gielda)})</h3><div class="siatka-wart">
+        <div class="blok"><h3>Wykres <span class="b-male">przeciągnij i przybliżaj · wejście, wyjście, SL/TP, Twoje wypełnienia</span></h3><div class="wykres-lw" id="wykres"></div></div>
+        <div class="blok"><h3>Z giełdy</h3><div class="siatka-wart">
           ${wart('Wejście (średnio)', cena(t.wejscie))}${wart('Wyjście (średnio)', cena(t.wyjscie))}
-          ${wart('Największa pozycja', t.maxWielkosc ? nf(5).format(t.maxWielkosc) + ' ' + E_(t.rynek) : t.ilosc ? nf(5).format(t.ilosc) : '–')}${wart('Wartość pozycji', usd(t.wartoscMax, false) + (t.wartosc && t.wartoscMax && t.wartosc > t.wartoscMax * 1.05 ? ` <span class="b-male">(dokupienia razem ${usd(t.wartosc, false)})</span>` : ''))}
+          ${wart('Największa pozycja', t.maxWielkosc ? nf(5).format(t.maxWielkosc) + ' ' + E_(String(t.rynek).split(/[\s(]/)[0]) : t.ilosc ? nf(5).format(t.ilosc) : '–')}${wart('Wartość pozycji', usd(t.wartoscMax, false) + (t.wartosc && t.wartoscMax && t.wartosc > t.wartoscMax * 1.05 ? ` <span class="b-male">(dokupienia razem ${usd(t.wartosc, false)})</span>` : ''))}
           ${wart('Kapitał konta', t.kapital ? usd(t.kapital, false) : '–')}${wart('Dźwignia vs konto', t.dzwignia ? '~' + nf(1).format(t.dzwignia) + '×' : '–')}
-          ${wart('Wynik brutto', usd(t.pnl))}${wart('Opłaty', usd(-t.oplaty) + (t.builder > 0 ? ` <span class="b-male">(Phantom ${usd(-t.builder)})</span>` : ''))}
-          ${wart('Funding', usd(t.funding))}${wart('Netto', `<span class="${kl(t.netto)}">${usd(t.netto)}</span>`)}
+          ${wart('Wynik brutto', `<span class="${kl(t.pnl)}">${usd(t.pnl)}</span>`)}${wart('Opłaty', `<span class="minus">${usd(-t.oplaty)}</span>` + (t.builder > 0 ? ` <span class="b-male">(Phantom ${usd(-t.builder)})</span>` : ''))}
+          ${wart('Funding', `<span class="${kl(t.funding)}">${usd(t.funding)}</span>`)}${wart('Netto', `<span class="${kl(t.netto)}">${usd(t.netto)}</span>`)}
           ${wart('Czas trzymania', czas(t.czasMin))}${wart('Wejście', t.makerWejscie === null ? '–' : t.makerWejscie ? 'maker (Limit)' : 'taker')}
-          ${wart('SL z giełdy', z && z.slPierwszy ? cena(z.slPierwszy) + (z.zmianySl ? ` (zmiany: ${z.zmianySl})` : '') : z ? 'nie było' : '–')}${wart('TP z giełdy', z && z.tpPierwszy ? cena(z.tpPierwszy) + (z.zmianyTp ? ` (zmiany: ${z.zmianyTp})` : '') : z ? 'nie było' : '–')}
-          ${wart('Najlepszy ruch (MFE)', r ? nf(2).format(r.mfe) + '%' : '–')}${wart('Najgorszy ruch (MAE)', r ? nf(2).format(r.mae) + '%' : '–')}
-          ${wart('Po wyjściu (4 h)', r ? '+' + nf(2).format(r.poWyjsciu) + '%' : '–')}${wart('Ryzyko przy SL', t.ryzyko ? usd(-t.ryzyko) + (t.ryzykoProc ? ` (${nf(1).format(t.ryzykoProc)}% konta)` : '') : '–')}
+          ${wart('SL z giełdy', z && z.slPierwszy ? cena(z.slPierwszy) + (z.zmianySl ? ` <span class="b-male">zmiany: ${z.zmianySl}</span>` : '') : z ? 'nie było' : '–')}${wart('TP z giełdy', z && z.tpPierwszy ? cena(z.tpPierwszy) + (z.zmianyTp ? ` <span class="b-male">zmiany: ${z.zmianyTp}</span>` : '') : z ? 'nie było' : '–')}
+          ${wart('Najlepszy ruch (MFE)', r ? '<span class="plus">+' + nf(2).format(r.mfe) + '%</span>' : '–')}${wart('Najgorszy ruch (MAE)', r ? '<span class="minus">−' + nf(2).format(r.mae) + '%</span>' : '–')}
+          ${wart('Po wyjściu (4 h)', r ? '+' + nf(2).format(r.poWyjsciu) + '%' : '–')}${wart('Ryzyko przy SL', t.ryzyko ? usd(-t.ryzyko) + (t.ryzykoProc ? ` <span class="b-male">${nf(1).format(t.ryzykoProc)}% konta</span>` : '') : '–')}
         </div></div>
       </div>
       <div class="dwie-kol">
-        <div class="blok"><h3>Asystent w chwili wejścia</h3>${a ? `<p class="male"><span class="decyzja ${a.decyzja === 'LONG' ? 'long' : a.decyzja === 'SHORT' ? 'short' : 'czekaj'}" style="font-size:1rem;display:inline-block;margin-right:8px">${a.decyzja}</span> przy ${a.L}× · świeca 1h ${kiedy(a.swieca)}</p>
-          <p class="male">${E_(DZ.powodZAsystenta(a, t.strona))}</p>` : '<p class="male">Jeszcze nie policzone – kliknij „Wypełnij za mnie”.</p>'}
-          ${t.chrome || t.notatkaChrome || t.setupDane ? `<h3>Dziennik Claude w Chrome</h3><p class="male">${t.chrome ? `${E_(t.chrome.id)} · ${E_(t.chrome.etykieta)} · ${E_(t.chrome.trend)}${t.chrome.notatka ? ' · ' + E_(t.chrome.notatka) : ''}<br>` : ''}${t.setupDane ? `Setup ${E_(t.setupDane.id)}: ${E_(t.setupDane.typ)}, plan ${cena(t.setupDane.wejscie)} / SL ${cena(t.setupDane.sl)} / TP ${cena(t.setupDane.tp)} (R:R ${t.setupDane.rr}), ${E_(t.setupDane.status)}${fin(t.setupDane.wynik_r) ? ' ' + nf(2).format(t.setupDane.wynik_r) + 'R' : ''}${t.setupAuto === t.setupDane.id && !(S.W.wpisy[id] || {}).setup ? ' <span class="auto-zn">dopasowany automatycznie</span>' : ''}<br>` : ''}${t.notatkaChrome ? E_(t.notatkaChrome.notatka) : ''}</p>` : ''}
-          ${t.plan ? `<h3>Plan sprzed wejścia</h3><p class="male">${kiedy(t.plan.czas)} · wejście ${cena(N(t.plan.wejscie))}, SL ${cena(N(t.plan.sl))}, TP ${cena(N(t.plan.tp))}${t.plan.powod ? ' · ' + E_(t.plan.powod) : ''}</p>` : ''}
-        </div>
+        <div class="blok"><h3>Asystent w chwili wejścia</h3>${asystentHtml}${chromeHtml}${planHtml}</div>
         <div class="blok"><h3>Zasady metody v3</h3><div class="lista-zasad">${zasadyHtml}</div></div>
       </div>
-      <div class="blok"><h3>Twój opis</h3>${formularz(w, t)}
-        <div class="przyciski"><button class="glowny" id="f-zapisz">Zapisz</button><button id="f-auto" title="Wypełnia tylko puste pola">Wypełnij za mnie</button>${t.reczny ? '<button id="f-usun">Usuń ten trade</button>' : ''}<span class="b-male" id="f-info"></span></div>
+      <div class="blok"><h3>Twój opis <span class="b-male">„Wypełnij za mnie” uzupełnia tylko puste pola – resztę piszesz Ty</span></h3>${formularz(w, t)}
+        <div class="przyciski"><button class="glowny" id="f-zapisz">Zapisz</button><button id="f-auto" title="Wypełnia tylko puste pola">✦ Wypełnij za mnie</button>${t.reczny ? '<button id="f-usun">Usuń ten trade</button>' : ''}<span class="b-male" id="f-info"></span></div>
       </div>`);
     podepnijFormularz();
     $('f-zapisz').addEventListener('click', async () => {
@@ -338,52 +445,14 @@
     rysujWykresTrade(t);
   }
 
-  // wykres świec 15m z Hyperliquid wokół trade'u
-  async function rysujWykresTrade(t) {
-    const cv = $('wykres'); if (!cv) return;
-    const opis = $('wykresOpis');
-    if (String(t.rynek).startsWith('KF:') || !t.otwarcie) { opis.textContent = 'Brak świec dla tego rynku.'; return; }
-    const kon = t.zamkniecie || Date.now();
-    const zakres = Math.max(kon - t.otwarcie, 2 * 3600000);
-    const od = t.otwarcie - Math.max(3 * 3600000, zakres * 0.6), doo = Math.min(Date.now(), kon + Math.max(2 * 3600000, zakres * 0.4));
-    let sw = S.swiece.get(t.id);
-    if (!sw) {
-      opis.textContent = 'Pobieram świece…';
-      try { sw = await swieceHL(monetaHL(t.rynek), od, doo, zakres > 3 * 86400000 ? '1h' : '15m', zakres > 3 * 86400000 ? 3600000 : 900000); S.swiece.set(t.id, sw); }
-      catch (e) { opis.textContent = 'Nie mogę pobrać świec: ' + e.message; return; }
-    }
-    if (!sw.length) { opis.textContent = 'Hyperliquid nie ma już świec z tego okresu (trzyma ok. 52 dni świec 15m).'; return; }
-    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
-    cv.width = W * dpr; cv.height = H * dpr;
-    const c = cv.getContext('2d'); c.scale(dpr, dpr);
-    const ceny = [t.wejscie, t.wyjscie, t.sl, t.tp, N(t.wpis.planWejscie)].filter(fin);
-    let lo = Math.min(...sw.map(x => x.l), ...ceny), hi = Math.max(...sw.map(x => x.h), ...ceny);
-    const pad = (hi - lo) * 0.06; lo -= pad; hi += pad;
-    const L = 8, P = 58, G = 10, D = 18;
-    const x = (tt) => L + (tt - sw[0].t) / (sw[sw.length - 1].t - sw[0].t || 1) * (W - L - P);
-    const y = (v) => G + (hi - v) / (hi - lo) * (H - G - D);
-    const sz = Math.max(1, (W - L - P) / sw.length * 0.7);
-    c.fillStyle = 'rgba(67,240,198,.08)'; c.fillRect(x(t.otwarcie), G, Math.max(2, x(kon) - x(t.otwarcie)), H - G - D);
-    for (const k of sw) {
-      const up = k.c >= k.o; c.strokeStyle = c.fillStyle = up ? 'rgba(67,240,198,.85)' : 'rgba(255,120,120,.85)';
-      c.beginPath(); c.moveTo(x(k.t), y(k.h)); c.lineTo(x(k.t), y(k.l)); c.stroke();
-      c.fillRect(x(k.t) - sz / 2, Math.min(y(k.o), y(k.c)), sz, Math.max(1, Math.abs(y(k.o) - y(k.c))));
-    }
-    const linia = (v, kolor, tekst, przer) => { if (!fin(v)) return; c.save(); c.strokeStyle = kolor; c.setLineDash(przer ? [5, 4] : []); c.beginPath(); c.moveTo(L, y(v)); c.lineTo(W - P, y(v)); c.stroke(); c.restore();
-      c.fillStyle = kolor; c.font = '10px JetBrains Mono, monospace'; c.fillText(tekst + ' ' + cena(v), W - P + 3, y(v) + 3); };
-    linia(t.wejscie, '#ffffff', 'wej', false); if (t.wyjscie) linia(t.wyjscie, '#ffd166', 'wyj', false);
-    linia(t.sl, '#ff6b6b', 'SL', true); linia(t.tp, '#43f0c6', 'TP', true); linia(N(t.wpis.planWejscie), '#7cc8ff', 'plan', true);
-    for (const f of t.wypelnienia || []) {
-      const kup = f.side === 'B'; c.fillStyle = kup ? '#43f0c6' : '#ff8a8a';
-      const xx = x(f.t), yy = y(f.px); c.beginPath();
-      if (kup) { c.moveTo(xx, yy + 2); c.lineTo(xx - 5, yy + 10); c.lineTo(xx + 5, yy + 10); } else { c.moveTo(xx, yy - 2); c.lineTo(xx - 5, yy - 10); c.lineTo(xx + 5, yy - 10); }
-      c.fill();
-    }
-    c.fillStyle = 'rgba(255,255,255,.45)'; c.font = '10px JetBrains Mono, monospace';
-    c.fillText(new Date(sw[0].t).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }), L, H - 4);
-    opis.textContent = `${sw.length} świec z Hyperliquid · trójkąty = Twoje wypełnienia (zielony kupno, czerwony sprzedaż) · jasne pole = czas trade'u`;
+  // ruchomy wykres trade'u (dziennik-wykresy.js): świece z Hyperliquid, przesuwanie i przybliżanie, odświeżanie na żywo
+  function rysujWykresTrade(t) {
+    const el = $('wykres'); if (!el) return;
+    if (S.wTrade) { S.wTrade.usun(); S.wTrade = null; }
+    if (String(t.rynek).startsWith('KF:')) { el.innerHTML = '<p class="b-male">Brak świec dla tego rynku.</p>'; return; }
+    if (!window.DZW || !DZW.dostepne()) { el.innerHTML = '<p class="b-male">Nie wczytała się biblioteka wykresów.</p>'; return; }
+    S.wTrade = DZW.trade(el, t, swieceHL);
   }
-
   // ------------------------------------------------------------------ plan przed wejściem / trade ręczny
   const teraz = () => { const d = new Date(Date.now() - new Date().getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); };
   function otworzPlan(idPlanu) {
@@ -444,48 +513,57 @@
   function rysujWnioski() {
     const wn = S.wn;
     const maks = Math.max(1e-9, ...wn.porownania.flatMap(p => [Math.abs(p.a.srednio || 0), Math.abs(p.b.srednio || 0)]));
-    const pasek = (g) => { const v = g.srednio || 0, s = Math.min(50, 50 * Math.abs(v) / maks); return `<span>${E_(g.nazwa)} <span class="b-male">(${g.n})</span></span><span class="os"><i class="${v >= 0 ? 'p' : 'm'}" style="width:${s}%"></i></span><span class="war ${kl(v)}">${usd(v)} / trade</span>`; };
-    $('porownania').innerHTML = wn.porownania.length ? wn.porownania.map(p => `<div class="porownanie"><h3>${E_(p.tytul)}${p.malaProba ? ' <span class="znacznik uwaga">mała próba</span>' : ''}</h3>
-      <div class="paski">${pasek(p.a)}${pasek(p.b)}</div><p class="male" style="margin:2px 0 0">${E_(p.tekst)}</p></div>`).join('')
+    const pasek = (g) => { const v = g.srednio || 0, s = Math.min(50, 50 * Math.abs(v) / maks);
+      return `<span class="nazwa">${E_(g.nazwa)}<small>${g.n}</small></span><span class="os"><i class="${v >= 0 ? 'p' : 'm'}" style="width:${s}%"></i></span><span class="war ${kl(v)}">${usd(v)}</span>`; };
+    $('porownania').innerHTML = wn.porownania.length ? wn.porownania.map(p => {
+      const lep = (p.a.srednio || 0) >= (p.b.srednio || 0) ? p.a : p.b, gor = lep === p.a ? p.b : p.a;
+      const zdanie = `${lep.nazwa}: ${usd(lep.srednio)} na trade, a ${gor.nazwa.charAt(0).toLowerCase() + gor.nazwa.slice(1)}: ${usd(gor.srednio)}`;
+      return `<div class="wniosek"><div class="temat">${E_(p.tytul)}</div>
+        <div class="naglowek"><h3>${E_(zdanie)}</h3>${p.malaProba ? '<span class="flaga uwaga">mała próba</span>' : ''}</div>
+        <div class="paski">${pasek(p.a)}${pasek(p.b)}</div><p class="opis">${E_(p.tekst)}</p></div>`; }).join('')
       : '<p class="male">Za mało zamkniętych trade\'ów do porównań (potrzeba co najmniej 3 w każdej grupie).</p>';
     const w = wn.wyjscia;
-    $('kartaWyjscia').innerHTML = `<h2>Wyjścia <span class="podtytul">ile zostawiasz na stole</span></h2>` + (w ? `<p class="male">Po wyjściu z zyskiem cena szła średnio jeszcze <b>${nf(2).format(w.poWyjsciuZyski || 0)}%</b> w Twoją stronę w ciągu 4 h (${w.wygrane} zyskownych trade'ów).
-      <b>${w.stratyBylyNaPlusie} z ${w.straty}</b> strat było wcześniej co najmniej 0,3% na plusie – tu pomaga zasada 8 (SL na wejście po +1R).</p>` : '<p class="male">Kliknij „Wypełnij za mnie” na zakładce Trade\'y – pobiorę świece i policzę ruch ceny w trakcie i po każdym trade\'zie.</p>');
+    $('kartaWyjscia').innerHTML = `<div class="sekcja-tytul"><h2>Wyjścia</h2><span class="b-male">ile zostawiasz na stole</span></div>` + (w ? `<div class="wyjscia-siatka">
+        <div class="kafel"><div class="et">Po wyjściu z zyskiem (4 h)</div><div class="wart plus">+${nf(2).format(w.poWyjsciuZyski || 0)}%</div><div class="pod">średnio tyle cena szła jeszcze w Twoją stronę (${ileTrade(w.wygrane)})</div></div>
+        <div class="kafel"><div class="et">Straty, które były na plusie</div><div class="wart">${w.stratyBylyNaPlusie}<small> / ${w.straty}</small></div><div class="pod">co najmniej +0,3% zanim skończyły się stratą – tu pomaga zasada 8 (SL na wejście po +1R)</div></div>
+      </div>` : '<p class="male">Kliknij „Wypełnij za mnie” na zakładce Trade\'y – pobiorę świece i policzę ruch ceny w trakcie i po każdym trade\'zie.</p>');
     $('obserwacje').innerHTML = ((S.C && S.C.obserwacje) || []).map(o => `<li>${E_(o)}</li>`).join('') || '<li>Brak zaimportowanego dziennika.</li>';
   }
   function rysujKrzywa() {
-    const cv = $('krzywa'); if (!cv || !cv.clientWidth) return;
+    const el = $('krzywa'); if (!el) return;
     const z = S.lista.filter(t => !t.otwarta).sort((a, b) => a.zamkniecie - b.zamkniecie);
-    const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight; cv.width = W * dpr; cv.height = H * dpr;
-    const c = cv.getContext('2d'); c.scale(dpr, dpr); c.clearRect(0, 0, W, H);
-    if (z.length < 2) return;
-    let a = 0, b = 0; const A = [0], B = [0];
-    for (const t of z) { a += t.netto; A.push(a); if (DZ.zgodneKiedy(t)) b += t.netto; B.push(b); }
-    const lo = Math.min(...A, ...B, 0), hi = Math.max(...A, ...B, 0), L = 8, P = 70, G = 10, D = 10;
-    const x = (i) => L + i / (A.length - 1) * (W - L - P), y = (v) => G + (hi - v) / (hi - lo || 1) * (H - G - D);
-    c.strokeStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(L, y(0)); c.lineTo(W - P, y(0)); c.stroke();
-    const rys = (arr, kolor) => { c.strokeStyle = kolor; c.lineWidth = 2; c.beginPath(); arr.forEach((v, i) => (i ? c.lineTo(x(i), y(v)) : c.moveTo(x(i), y(v)))); c.stroke();
-      c.fillStyle = kolor; c.font = '11px JetBrains Mono, monospace'; c.fillText(usd(arr[arr.length - 1]), W - P + 4, y(arr[arr.length - 1]) + 4); };
-    rys(A, '#43f0c6'); rys(B, '#7cc8ff');
-    $('krzywaOpis').textContent = `${z.length} zamkniętych trade'ów. Wszystkie: ${usd(a)}. Gdybyś pominął trade'y łamiące zasady 4–7 (longi pod EMA200, wejście po stracie, po dużym zysku, więcej niż 2 dziennie): ${usd(b)} z ${S.wn.kiedy.n} trade'ów. Wszystkich 9 zasad (z SL i ryzykiem 1–2%) nie spełnił żaden trade. To rachunek wstecz na tych samych danych – nie gwarancja na przyszłość.`;
+    let a = 0, b = 0; const pkt = [{ t: (z[0] ? z[0].otwarcie : Date.now()) - 60000, a: 0, b: 0 }];
+    for (const t of z) { a += t.netto; if (DZ.zgodneKiedy(t)) b += t.netto; pkt.push({ t: t.zamkniecie, a, b, netto: t.netto, opis: t.strona.toUpperCase() + ' ' + rynekLadnie(t.rynek) }); }
+    if (window.DZW && DZW.dostepne()) { if (!S.wKrzywa) S.wKrzywa = DZW.krzywa(el); S.wKrzywa.ustaw(pkt); }
+    else el.innerHTML = '<p class="b-male">Nie wczytała się biblioteka wykresów.</p>';
+    $('krzywaOpis').textContent = `${ileTrade(z.length)}. Wszystkie razem: ${usd(a)}. Gdybyś pominął trade'y łamiące zasady 4–7 (longi pod EMA200, wejście po stracie, po dużym zysku, więcej niż 2 dziennie): ${usd(b)} z ${ileTrade(S.wn.kiedy.n)}. Wszystkich 9 zasad (z SL i ryzykiem 1–2%) nie spełnił żaden trade. To rachunek wstecz na tych samych danych – nie gwarancja na przyszłość.`;
   }
-  window.addEventListener('resize', () => { if (S.zakl === 'wnioski') rysujKrzywa(); });
-
   function rysujZasady() {
     const zs = (S.C && S.C.zasady) || [];
-    $('zasadyTabela').innerHTML = `<div class="przewijana"><table class="tab"><thead><tr><th>Zasada</th><th>Złamana</th><th class="l">Wynik złamanych</th><th>Dotrzymana</th><th class="l">Wynik dotrzymanych</th><th>Bez danych</th></tr></thead><tbody>
-      ${S.wn.zasady.map(r => { const opis = zs.find(x => x.nr === r.kod); return `<tr><td><b>${r.kod}. ${E_(opis ? opis.zasada : r.krotko)}</b>${opis ? `<br><span class="b-male">${E_(opis.dlaczego)}</span>` : ''}</td>
-        <td>${r.zlamana.n}</td><td class="l ${kl(r.zlamana.netto)}">${r.zlamana.n ? usd(r.zlamana.netto) : '–'}</td><td>${r.dotrzymana.n}</td><td class="l ${kl(r.dotrzymana.netto)}">${r.dotrzymana.n ? usd(r.dotrzymana.netto) : '–'}</td><td>${r.bezDanych}</td></tr>`; }).join('')}
-      </tbody></table></div>`;
+    $('zasadyTabela').innerHTML = `<div class="zasady-siatka">${S.wn.zasady.map(r => {
+      const opis = zs.find(x => x.nr === r.kod), razem = r.zlamana.n + r.dotrzymana.n, udz = razem ? 100 * r.dotrzymana.n / razem : 0;
+      return `<div class="zasada"><h3><span class="nr">${r.kod}</span><span>${E_(opis ? opis.zasada : r.krotko)}</span></h3>
+        ${opis ? `<p class="dlaczego">${E_(opis.dlaczego)}</p>` : ''}
+        <div class="pasek-z" title="dotrzymana ${r.dotrzymana.n}, złamana ${r.zlamana.n}"><i style="width:${udz.toFixed(1)}%"></i></div>
+        <div class="liczby">
+          <div><div class="et">Dotrzymana · ${r.dotrzymana.n}</div><div class="w ${kl(r.dotrzymana.netto)}">${r.dotrzymana.n ? usd(r.dotrzymana.netto) : '–'}</div></div>
+          <div><div class="et">Złamana · ${r.zlamana.n}</div><div class="w ${kl(r.zlamana.netto)}">${r.zlamana.n ? usd(r.zlamana.netto) : '–'}</div></div>
+        </div>${r.bezDanych ? `<span class="b-male">bez danych: ${ileTrade(r.bezDanych)}</span>` : ''}</div>`; }).join('')}</div>`;
   }
   function rysujSetupy() {
     const st = (S.C && S.C.setupy) || [];
-    const roz = st.filter(s => fin(s.wynik_r));
-    $('setupyPod').textContent = `${st.length} setupów · rozstrzygnięte ${roz.length}: ${roz.filter(s => s.wynik_r > 0).length} na plus, suma ${nf(2).format(roz.reduce((a, s) => a + s.wynik_r, 0))}R`;
-    $('setupyTabela').innerHTML = st.length ? `<div class="przewijana"><table class="tab"><thead><tr><th>#</th><th>Data</th><th>Kierunek</th><th>Typ</th><th class="l">Wejście / SL / TP</th><th class="l">R:R</th><th>Status</th><th class="l">Wynik</th><th>Twoje trade'y</th></tr></thead><tbody>
-      ${st.map(s => { const tt = S.lista.filter(t => t.setup === s.id); return `<tr><td><b>${E_(s.id)}</b></td><td>${E_(s.data.slice(5))}</td><td><span class="kier ${s.kierunek.toLowerCase()}">${E_(s.kierunek)}</span></td><td>${E_(s.typ)}<br><span class="b-male">${E_(s.uwagi || '')}</span></td>
-        <td class="l">${cena(s.wejscie)} / ${cena(s.sl)} / ${cena(s.tp)}</td><td class="l">${E_(s.rr)}</td><td>${E_(s.status)}</td><td class="l ${kl(s.wynik_r)}">${fin(s.wynik_r) ? nf(2).format(s.wynik_r) + 'R' : '–'}</td>
-        <td>${tt.length ? tt.map(t => `<a href="#" data-id="${E_(t.id)}">${kiedy(t.otwarcie)} <span class="${kl(t.netto)}">${usd(t.netto)}</span></a>`).join('<br>') : '<span class="b-male">brak</span>'}</td></tr>`; }).join('')}
+    const roz = st.filter(s => fin(s.wynik_r)), plus = roz.filter(s => s.wynik_r > 0).length, sumaR = roz.reduce((a, s) => a + s.wynik_r, 0);
+    $('setupyPod').textContent = `${st.length} setupów z analiz`;
+    $('setupyKafle').innerHTML = [
+      ['Rozstrzygnięte', `${roz.length}<small> / ${st.length}</small>`, 'z wynikiem TP albo SL'],
+      ['Trafione', `${plus}<small> / ${roz.length}</small>`, roz.length ? proc(plus / roz.length) + ' skuteczności' : '–'],
+      ['Suma', `<span class="${kl(sumaR)}">${(sumaR >= 0 ? '+' : '') + nf(2).format(sumaR)}R</span>`, roz.length ? 'średnio ' + nf(2).format(sumaR / roz.length) + 'R na setup' : '–'],
+      ['Twoje trade\'y z setupem', String(S.lista.filter(t => t.setup).length), 'dopasowane do setupów']
+    ].map(([et, w, p]) => `<div class="kafel"><div class="et">${et}</div><div class="wart">${w}</div><div class="pod">${p}</div></div>`).join('');
+    $('setupyTabela').innerHTML = st.length ? `<div class="przewijana"><table class="tab karty-mobilne"><thead><tr><th>#</th><th>Data</th><th>Kierunek</th><th>Typ</th><th class="l">Wejście / SL / TP</th><th class="l">R:R</th><th>Status</th><th class="l">Wynik</th><th>Twoje trade'y</th></tr></thead><tbody>
+      ${st.slice().reverse().map(s => { const tt = S.lista.filter(t => t.setup === s.id); return `<tr><td><b>${E_(s.id)}</b></td><td data-et="Data">${E_(s.data.slice(8, 10) + '.' + s.data.slice(5, 7))}</td><td><span class="kier ${s.kierunek.toLowerCase()}">${E_(s.kierunek)}</span></td><td>${E_(s.typ)}<span class="b-male">${E_(s.uwagi || '')}</span></td>
+        <td class="l" data-et="Plan">${cena(s.wejscie)} / ${cena(s.sl)} / ${cena(s.tp)}</td><td class="l" data-et="R:R">${E_(s.rr)}</td><td data-et="Status">${E_(s.status)}</td><td class="l ${kl(s.wynik_r)}" data-et="Wynik">${fin(s.wynik_r) ? nf(2).format(s.wynik_r) + 'R' : '–'}</td>
+        <td data-et="Twoje trade'y">${tt.length ? tt.map(t => `<a href="#" data-id="${E_(t.id)}">${kiedy(t.otwarcie)} <span class="${kl(t.netto)}">${usd(t.netto)}</span></a>`).join('<br>') : '<span class="b-male">brak</span>'}</td></tr>`; }).join('')}
       </tbody></table></div>` : '<p class="male">Brak zaimportowanego dziennika z Chrome.</p>';
   }
   $('setupyTabela').addEventListener('click', (e) => { const a = e.target.closest('[data-id]'); if (a) { e.preventDefault(); otworzTrade(a.dataset.id); } });

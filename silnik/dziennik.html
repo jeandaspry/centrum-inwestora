@@ -9,7 +9,7 @@
 <title>Dziennik tradera</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="asystent.css">
 <link rel="stylesheet" href="dziennik.css">
 <link rel="stylesheet" href="../telefon-strony.css">
@@ -25,52 +25,60 @@
     <a class="przycisk" href="asystent.html" data-centrum="asystent" title="Asystent rynku">Asystent →</a>
   </div>
   <nav class="nawigacja" id="zakladki">
-    <a href="#trade" data-z="trade">Trade'y</a><a href="#wnioski" data-z="wnioski">Wnioski</a><a href="#zasady" data-z="zasady">Zasady</a><a href="#setupy" data-z="setupy">Setupy z Chrome</a>
+    <a href="#trade" data-z="trade">Trade'y</a><a href="#wnioski" data-z="wnioski">Wnioski</a><a href="#zasady" data-z="zasady">Zasady</a><a href="#setupy" data-z="setupy">Setupy</a>
   </nav>
 </header>
 
 <main>
   <!-- ======================= TRADE'Y ======================= -->
   <section class="zakl" id="z-trade">
-    <div class="kafle" id="kafle"></div>
+    <section class="przeglad">
+      <div class="hero-wynik" id="hero"></div>
+      <div class="kafle" id="kafle"></div>
+    </section>
 
     <section class="karta" id="kartaDzis"></section>
 
     <section class="karta">
-      <h2>Twoje trade'y <span class="podtytul" id="listaPod"></span></h2>
+      <div class="sekcja-tytul"><h2>Twoje trade'y</h2><span class="b-male" id="listaPod"></span></div>
       <div class="narzedzia">
-        <span class="przelacznik filtry" id="filtry">
-          <button data-f="wszystkie">Wszystkie</button><button data-f="puste">Do uzupełnienia</button><button data-f="setup">Z setupem</button><button data-f="bezSetupu">Bez setupu</button><button data-f="zasady">Łamią zasady</button><button data-f="revenge">Po stracie</button>
-        </span>
-        <span class="rozpychacz"></span>
-        <button class="przycisk" id="dodajPlan" title="Wpisz plan, zanim wejdziesz – strona dopasuje go do trade'u z giełdy">+ Plan przed wejściem</button>
-        <button class="przycisk" id="dodajReczny" title="Trade z giełdy, której panel nie pobiera">+ Trade ręcznie</button>
-        <button class="przycisk" id="odswiezAuto" title="Pobiera od nowa SL/TP, kapitał, świece i ocenę Asystenta dla wszystkich trade'ów (Twoje wpisy zostają)">Odśwież dane z giełdy</button>
-        <button class="przycisk glowny" id="wypelnijWszystko" title="Pobiera SL/TP z giełdy, kapitał konta, ruch ceny i ocenę Asystenta, a potem wypełnia puste pola">Wypełnij za mnie</button>
+        <div class="filtry-pasek" id="filtry" role="group" aria-label="Filtr">
+          <button data-f="wszystkie">Wszystkie</button><button data-f="puste">Do uzupełnienia</button><button data-f="setup">Z setupem</button><button data-f="bezSetupu">Bez setupu</button><button data-f="zasady">Łamią zasady</button><button data-f="revenge">Po stracie</button><button data-f="plus">Na plus</button><button data-f="minus">Na minus</button>
+        </div>
+      </div>
+      <div class="narzedzia">
+        <div class="akcje">
+          <button class="glowny" id="wypelnijWszystko" title="Pobiera SL/TP z giełdy, kapitał konta, ruch ceny i ocenę Asystenta, a potem wypełnia puste pola">✦ Wypełnij za mnie</button>
+          <button id="dodajPlan" title="Wpisz plan, zanim wejdziesz – strona dopasuje go do trade'u z giełdy">＋ Plan przed wejściem</button>
+          <button id="dodajReczny" title="Trade z giełdy, której panel nie pobiera">＋ Trade ręcznie</button>
+          <button id="odswiezAuto" title="Pobiera od nowa SL/TP, kapitał, świece i ocenę Asystenta dla wszystkich trade'ów (Twoje wpisy zostają)">↻ Odśwież dane z giełdy</button>
+        </div>
       </div>
       <div id="postep" class="postep ukryte"><i></i><span></span></div>
+      <div id="filtrDnia" style="margin-bottom:10px"></div>
       <div id="plany"></div>
       <div id="lista" class="lista-trade"></div>
-      <p class="b-male" style="margin-top:10px">Liczby z giełdy są te same co w panelu inwestora (Hyperliquid, Jupiter, Kraken Futures). Dzień = dzień w Polsce. Kliknij trade, żeby go opisać.</p>
+      <p class="b-male" style="margin:14px 0 0">Liczby z giełdy są te same co w panelu inwestora (Hyperliquid, Jupiter, Kraken Futures). Dzień = dzień w Polsce. Kliknij trade, żeby go opisać.</p>
     </section>
+    <p class="b-male" style="text-align:center">Wykresy: <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Lightweight Charts™</a> (licencja Apache 2.0)</p>
   </section>
 
   <!-- ======================= WNIOSKI ======================= -->
   <section class="zakl ukryte" id="z-wnioski">
     <section class="karta">
-      <h2>Wynik w czasie <span class="podtytul">łącznie i gdybyś trzymał się zasad 4–7</span></h2>
-      <canvas id="krzywa" class="krzywa" height="220"></canvas>
+      <div class="sekcja-tytul"><h2>Wynik w czasie</h2><span class="b-male">łącznie i gdybyś trzymał się zasad 4–7</span></div>
+      <div id="krzywa" class="wykres-lw krzywa"></div>
       <div class="legenda"><span style="--k:#43f0c6">wszystkie trade'y</span><span style="--k:#7cc8ff">bez trade'ów łamiących zasady 4–7 (kiedy wchodzić)</span></div>
-      <p class="male" id="krzywaOpis"></p>
+      <p class="male" id="krzywaOpis" style="margin-top:10px"></p>
     </section>
     <section class="karta">
-      <h2>Co mówią Twoje dane <span class="podtytul">porównania od największej różnicy</span></h2>
+      <div class="sekcja-tytul"><h2>Co mówią Twoje dane</h2><span class="b-male">od największej różnicy</span></div>
       <div id="porownania"></div>
     </section>
     <section class="karta" id="kartaWyjscia"></section>
     <section class="karta">
-      <h2>Wnioski z dziennika Claude w Chrome <span class="podtytul">stan do 11.11.2026</span></h2>
-      <ul class="male lista-wn" id="obserwacje"></ul>
+      <div class="sekcja-tytul"><h2>Z dziennika Claude w Chrome</h2><span class="b-male">stan do 11.11.2026</span></div>
+      <ul class="lista-wn" id="obserwacje"></ul>
     </section>
     <p class="b-male">To opis Twoich danych, nie rada inwestycyjna. Przy małej liczbie trade'ów różnice mogą być przypadkiem – oznaczam to.</p>
   </section>
@@ -78,16 +86,17 @@
   <!-- ======================= ZASADY ======================= -->
   <section class="zakl ukryte" id="z-zasady">
     <section class="karta">
-      <h2>Zasady metody v3 <span class="podtytul">z dziennika Claude w Chrome · ile kosztuje ich łamanie</span></h2>
+      <div class="sekcja-tytul"><h2>Zasady metody v3</h2><span class="b-male">z dziennika Claude w Chrome · ile kosztuje ich łamanie</span></div>
       <div id="zasadyTabela"></div>
-      <p class="b-male" style="margin-top:10px">„Bez danych” = nie da się sprawdzić (np. brak SL, brak kapitału konta). Kliknij „Wypełnij za mnie”, żeby pobrać SL/TP i kapitał z Hyperliquid.</p>
+      <p class="b-male" style="margin-top:14px">„Bez danych” = nie da się sprawdzić (np. brak SL). Kliknij „Wypełnij za mnie”, żeby pobrać SL/TP i kapitał z Hyperliquid.</p>
     </section>
   </section>
 
   <!-- ======================= SETUPY ======================= -->
   <section class="zakl ukryte" id="z-setupy">
     <section class="karta">
-      <h2>Setupy z analiz Claude w Chrome <span class="podtytul" id="setupyPod"></span></h2>
+      <div class="sekcja-tytul"><h2>Setupy z analiz Claude w Chrome</h2><span class="b-male" id="setupyPod"></span></div>
+      <div class="statystyki-setupow kafle" id="setupyKafle"></div>
       <div id="setupyTabela"></div>
     </section>
   </section>
@@ -104,6 +113,8 @@
 <script src="lab.js"></script>
 <script src="asystent-silnik.js"></script>
 <script src="dziennik-silnik.js"></script>
+<script src="lightweight-charts.js"></script>
+<script src="dziennik-wykresy.js"></script>
 <script src="dziennik.js"></script>
 </body>
 </html>
