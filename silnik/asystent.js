@@ -575,5 +575,5 @@
   start();
   window.addEventListener('resize', () => { if (S.walidacja && S.hist) renderWiarygodnosc(); });
   // zmiana motywu: przerysuj wszystko (kolory w SVG i na płótnach są brane z motywu przy rysowaniu)
-  document.addEventListener('motyw', () => { try { renderWszystko(); if (S.walidacja && S.hist) renderWiarygodnosc(); } catch (e) { /* jeszcze bez danych */ } });
+  document.addEventListener('motyw', () => { pokazDzwignie(); try { renderWszystko(); if (S.walidacja && S.hist) renderWiarygodnosc(); } catch (e) { /* jeszcze bez danych */ } });
 })();
