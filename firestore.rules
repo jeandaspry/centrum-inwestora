@@ -1,5 +1,5 @@
 rules_version = '2';
-// Centrum inwestora: migawki panelu i podgląd PIT-38. Czytać i zapisywać może WYŁĄCZNIE zalogowany właściciel
+// Centrum inwestora: migawki panelu, podgląd PIT-38 i kopia dziennika tradera. Czytać i zapisywać może WYŁĄCZNIE zalogowany właściciel
 // (ten sam uid na komputerze i w telefonie). Wszystko inne jest zablokowane.
 service cloud.firestore {
   match /databases/{database}/documents {
