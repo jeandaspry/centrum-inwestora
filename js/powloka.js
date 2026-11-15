@@ -4,7 +4,7 @@
  * więc przełączanie kart nie liczy wszystkiego od nowa. */
 (function () {
   'use strict';
-  const WERSJA = '0.3.1';
+  const WERSJA = '0.3.2';
   window.INWESTOR_POWLOKA = true;
   const $ = id => document.getElementById(id);
   const KARTY = ['panel', 'asystent', 'laboratorium', 'wiecej'];
@@ -241,16 +241,22 @@
     // 3. ustawienia, service worker i kopia offline – tylko tej aplikacji. Service worker najpierw, a kopię dopiero po
     //    wczytaniu strony: inaczej dopisałby do niej pliki, które ta strona jeszcze dociąga.
     try { for (const k of bezKlucza(localStorage)) localStorage.removeItem(k); for (const k of bezKlucza(sessionStorage)) sessionStorage.removeItem(k); } catch (e) { nieudane.push('ustawienia'); }
-    try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw) sw.postMessage({ inwestor: 'usun-kopie' }); } catch (e) { /* bez service workera */ }
-    try { if ('serviceWorker' in navigator) for (const r of (await navigator.serviceWorker.getRegistrations()).filter(naszSW)) await r.unregister(); } catch (e) { nieudane.push('service worker'); }
+    try {
+      if ('serviceWorker' in navigator) for (const r of (await navigator.serviceWorker.getRegistrations()).filter(naszSW)) {
+        for (const w of [r.installing, r.waiting, r.active]) if (w) { try { w.postMessage({ inwestor: 'usun-kopie' }); } catch (e) { } }
+        await r.unregister();
+      }
+    } catch (e) { nieudane.push('service worker'); }
     if (document.readyState !== 'complete') await new Promise(r => window.addEventListener('load', r, { once: true }));
     try { if (document.fonts) await document.fonts.ready; } catch (e) { }
+    // kopia: usuwamy i pilnujemy, aż przez ok. 1,5 s nic jej nie założy na nowo (najdłużej ok. 12 s)
     const czekaj = ms => new Promise(r => setTimeout(r, ms));
     try {
-      if ('caches' in window) for (let proba = 0; proba < 4; proba++) {
+      if ('caches' in window) for (let proba = 0, spokoj = 0; proba < 30 && spokoj < 3; proba++) {
         await czekaj(400);
-        const k = (await caches.keys()).filter(naszaKopia); if (!k.length) break;
-        for (const x of k) await caches.delete(x);
+        const k = (await caches.keys()).filter(naszaKopia);
+        if (!k.length) { spokoj++; continue; }
+        spokoj = 0; for (const x of k) await caches.delete(x);
       }
     } catch (e) { nieudane.push('kopia offline'); }
     // 3. sprawdzenie, co zostało
