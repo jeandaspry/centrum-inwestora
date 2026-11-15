@@ -4,7 +4,7 @@
  * więc przełączanie kart nie liczy wszystkiego od nowa. */
 (function () {
   'use strict';
-  const WERSJA = '0.3';
+  const WERSJA = '0.3.1';
   window.INWESTOR_POWLOKA = true;
   const $ = id => document.getElementById(id);
   const KARTY = ['panel', 'asystent', 'laboratorium', 'wiecej'];
@@ -156,6 +156,37 @@
   // ---------- usuwanie z pamięci telefonu ----------
   // Bazy usuwamy przy starcie strony (po przeładowaniu), zanim cokolwiek je otworzy: otwartej bazy nie da się usunąć,
   // a biblioteka Firebase nie zwalnia swojej, dopóki strona żyje.
+  // Ta aplikacja dzieli adres jeandaspry.github.io z innymi (np. Bilansem) – w zwykłej przeglądarce mają wspólną pamięć.
+  // Dlatego usuwamy WYŁĄCZNIE dane tej aplikacji: jej bazy, klucze, kopię offline i service worker. Bazy logowania Firebase
+  // są wspólne dla wszystkich aplikacji Firebase pod tym adresem – z nich kasujemy tylko wpisy tej aplikacji.
+  const ZAKRES = new URL('./', location.href).href;
+  const naszKlucz = k => /^(inwestor-|asystent2?-|lab-)/.test(k) || (k.startsWith('firestore_') && k.includes('centrum-inwestora'));
+  const naszaBaza = n => n === 'inwestor-dane' || (n.startsWith('firestore/') && n.includes('/centrum-inwestora/'));
+  const naszaKopia = n => n.startsWith('inwestor-');
+  const naszSW = r => r.scope.startsWith(ZAKRES);
+  const cfg = window.INWESTOR_FIREBASE || {};
+  const WSPOLNE = [   // baza Firebase, po czym poznać wpis tej aplikacji
+    { baza: 'firebaseLocalStorageDb', nasz: k => k === '__sak' || (!!cfg.apiKey && String(k).includes(cfg.apiKey)) },
+    { baza: 'firebase-heartbeat-database', nasz: k => !!cfg.appId && String(k).includes(cfg.appId) }
+  ];
+  const bezKlucza = (sklep) => { try { const w = []; for (let i = 0; i < sklep.length; i++) { const k = sklep.key(i); if (k && naszKlucz(k)) w.push(k); } return w; } catch (e) { return []; } };
+  // przegląda bazę wspólną: usun = true kasuje wpisy tej aplikacji; zwraca { nasze, obce } albo null (bazy nie ma / błąd)
+  const wpisyWspolne = (nazwa, nasz, usun) => new Promise(ok => {
+    let r; try { r = indexedDB.open(nazwa); } catch (e) { ok(null); return; }
+    r.onupgradeneeded = () => r.transaction.abort();   // bazy nie było – nie zakładaj jej (otwarcie kończy się błędem)
+    r.onerror = (e) => { e.preventDefault(); ok(null); };
+    r.onsuccess = () => {
+      const db = r.result, sklepy = [...db.objectStoreNames];
+      if (!sklepy.length) { db.close(); ok({ nasze: 0, obce: 0 }); return; }
+      const t = db.transaction(sklepy, usun ? 'readwrite' : 'readonly'); let nasze = 0, obce = 0;
+      for (const s of sklepy) {
+        const c = t.objectStore(s).openCursor();
+        c.onsuccess = () => { const w = c.result; if (!w) return; if (nasz(w.key)) { nasze++; if (usun) w.delete(); } else obce++; w.continue(); };
+      }
+      t.oncomplete = () => { db.close(); ok({ nasze, obce }); };
+      t.onerror = t.onabort = () => { db.close(); ok(null); };
+    };
+  });
   const usunBaze = (nazwa) => new Promise(ok => {
     let koniec = false; const zakoncz = (w) => { if (!koniec) { koniec = true; ok(w); } };
     try {
@@ -168,17 +199,19 @@
     try { if (indexedDB.databases) return [...new Set((await indexedDB.databases()).map(d => d.name).filter(Boolean).concat(znane))].filter(filtr); } catch (e) { /* starszy iOS */ }
     return znane.filter(filtr);
   }
-  // po wylogowaniu: kopia migawek panelu (Firestore) – bazy firestore/* i jej znaczniki w localStorage
+  // po wylogowaniu: kopia migawek panelu (Firestore tego projektu) – jej baza i znaczniki w localStorage
   async function wyczyscKopieMigawek() {
-    for (const n of await nazwyBaz(n => n.startsWith('firestore/'), ['firestore/[DEFAULT]/centrum-inwestora/main'])) await usunBaze(n);
-    try { for (const k of Object.keys(localStorage)) if (k.startsWith('firestore_')) localStorage.removeItem(k); } catch (e) { }
+    for (const n of await nazwyBaz(n => n.startsWith('firestore/') && n.includes('/centrum-inwestora/'), ['firestore/[DEFAULT]/centrum-inwestora/main'])) await usunBaze(n);
+    try { for (const k of bezKlucza(localStorage)) if (k.startsWith('firestore_')) localStorage.removeItem(k); } catch (e) { }
   }
+  // co z danych TEJ aplikacji jeszcze jest w pamięci (dane innych aplikacji pod tym adresem nie są liczone)
   async function stanPamieci() {
     let bazy = [];
-    try { if (indexedDB.databases) bazy = (await indexedDB.databases()).map(d => d.name).filter(Boolean); } catch (e) { bazy = ['(nie da się sprawdzić)']; }
-    const kopie = 'caches' in window ? await caches.keys() : [];
-    const sw = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistrations() : [];
-    let ls = 0; try { ls = localStorage.length + sessionStorage.length; } catch (e) { /* brak dostępu */ }
+    try { if (indexedDB.databases) bazy = (await indexedDB.databases()).map(d => d.name).filter(n => n && naszaBaza(n)); } catch (e) { bazy = ['(nie da się sprawdzić)']; }
+    for (const w of WSPOLNE) { const s = await wpisyWspolne(w.baza, w.nasz, false); if (s && s.nasze) bazy.push(w.baza + ' (wpisy tej aplikacji: ' + s.nasze + ')'); }
+    const kopie = 'caches' in window ? (await caches.keys()).filter(naszaKopia) : [];
+    const sw = 'serviceWorker' in navigator ? (await navigator.serviceWorker.getRegistrations()).filter(naszSW) : [];
+    const ls = bezKlucza(localStorage).length + bezKlucza(sessionStorage).length;
     return { bazy, kopie, sw: sw.length, ls };
   }
   function zlecUsuniecie() {
@@ -196,14 +229,30 @@
     ekran.innerHTML = '<div><h1>Usuwam…</h1></div>';
     document.body.appendChild(ekran);
     if (window.SERWER_W_TELEFONIE && window.SERWER_W_TELEFONIE.zamknij) { try { await window.SERWER_W_TELEFONIE.zamknij(); } catch (e) { } }
-    // 1. bazy IndexedDB (dane rynkowe, dzienniki, logowanie, kopia Firestore)
+    // 1. bazy IndexedDB tej aplikacji (dane rynkowe, dzienniki, kopia migawek Firestore)
     const nieudane = [];
-    for (const n of await nazwyBaz(() => true, ['inwestor-dane', 'firebaseLocalStorageDb', 'firebase-heartbeat-database', 'firebase-installations-database', 'firestore/[DEFAULT]/centrum-inwestora/main']))
+    for (const n of await nazwyBaz(naszaBaza, ['inwestor-dane', 'firestore/[DEFAULT]/centrum-inwestora/main']))
       if (!(await usunBaze(n))) nieudane.push(n);
-    // 2. ustawienia, kopia offline, service worker
-    try { localStorage.clear(); sessionStorage.clear(); } catch (e) { nieudane.push('localStorage'); }
-    try { if ('caches' in window) for (const k of await caches.keys()) await caches.delete(k); } catch (e) { nieudane.push('kopia offline'); }
-    try { if ('serviceWorker' in navigator) for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister(); } catch (e) { nieudane.push('service worker'); }
+    // 2. logowanie: z baz wspólnych tylko wpisy tej aplikacji; pustą bazę usuwamy w całości
+    for (const w of WSPOLNE) {
+      const s = await wpisyWspolne(w.baza, w.nasz, true);
+      if (s && !s.obce) await usunBaze(w.baza);
+    }
+    // 3. ustawienia, service worker i kopia offline – tylko tej aplikacji. Service worker najpierw, a kopię dopiero po
+    //    wczytaniu strony: inaczej dopisałby do niej pliki, które ta strona jeszcze dociąga.
+    try { for (const k of bezKlucza(localStorage)) localStorage.removeItem(k); for (const k of bezKlucza(sessionStorage)) sessionStorage.removeItem(k); } catch (e) { nieudane.push('ustawienia'); }
+    try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw) sw.postMessage({ inwestor: 'usun-kopie' }); } catch (e) { /* bez service workera */ }
+    try { if ('serviceWorker' in navigator) for (const r of (await navigator.serviceWorker.getRegistrations()).filter(naszSW)) await r.unregister(); } catch (e) { nieudane.push('service worker'); }
+    if (document.readyState !== 'complete') await new Promise(r => window.addEventListener('load', r, { once: true }));
+    try { if (document.fonts) await document.fonts.ready; } catch (e) { }
+    const czekaj = ms => new Promise(r => setTimeout(r, ms));
+    try {
+      if ('caches' in window) for (let proba = 0; proba < 4; proba++) {
+        await czekaj(400);
+        const k = (await caches.keys()).filter(naszaKopia); if (!k.length) break;
+        for (const x of k) await caches.delete(x);
+      }
+    } catch (e) { nieudane.push('kopia offline'); }
     // 3. sprawdzenie, co zostało
     const s = await stanPamieci();
     const zostalo = [].concat(s.bazy.length ? ['bazy: ' + s.bazy.join(', ')] : [], s.kopie.length ? ['kopia offline: ' + s.kopie.join(', ')] : [],
