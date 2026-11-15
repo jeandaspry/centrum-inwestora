@@ -11,6 +11,10 @@
   const data = t => new Date(t).toISOString().slice(0, 10);
   const pTxt = p => p < 0.001 ? fmt(p * 100, 2) + '%' : fmt(p * 100, 1) + '%';
   const kolor = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  // kolor serii może być nazwą zmiennej motywu ('--akcent') – wtedy po zmianie motywu wykres przerysuje się w nowych kolorach
+  const kol = k => (typeof k === 'string' && k.startsWith('--') ? kolor(k) : k);
+  const rysunki = new Map();   // ostatni rysunek każdego płótna – do przerysowania po zmianie motywu
+  document.addEventListener('motyw', () => { for (const f of rysunki.values()) { try { f(); } catch (e) { /* płótno zniknęło */ } } });
 
   function ustawBramke(id, stan, tekstZnaku, html) {
     const k = $(id), z = k.querySelector('.znak');
@@ -30,6 +34,7 @@
   }
   // serie: [{y: [...] (log-zwrot narastająco), kolor, nazwa}], czasy: [...]
   function wykresKrzywej(c, czasy, serie) {
+    rysunki.set(c, () => wykresKrzywej(c, czasy, serie));
     const { x, w, h } = plotno(c), L = 46, R = 8, T = 18, B = 20;
     let mn = 0, mx = 0;
     for (const s of serie) for (const v of s.y) { if (v < mn) mn = v; if (v > mx) mx = v; }
@@ -46,14 +51,15 @@
     for (let k = 0; k <= 4; k++) { const i = Math.round((czasy.length - 1) * k / 4); x.fillText(data(czasy[i]), Math.min(w - 34, Math.max(L + 30, X(i))), h - 5); }
     let lx = L + 4;
     for (const s of serie) {
-      x.strokeStyle = s.kolor; x.lineWidth = s.gruba ? 2 : 1.3; x.beginPath();
+      x.strokeStyle = kol(s.kolor); x.lineWidth = s.gruba ? 2 : 1.3; x.beginPath();
       const krok = Math.max(1, Math.floor(s.y.length / 1500));
       for (let i = 0; i < s.y.length; i += krok) { i === 0 ? x.moveTo(X(i), Y(s.y[i])) : x.lineTo(X(i), Y(s.y[i])); }
       x.lineTo(X(s.y.length - 1), Y(s.y[s.y.length - 1])); x.stroke();
-      x.fillStyle = s.kolor; x.textAlign = 'left'; x.fillRect(lx, 5, 10, 3); x.fillStyle = kolor('--tekst'); x.fillText(s.nazwa, lx + 14, 11); lx += x.measureText(s.nazwa).width + 30;
+      x.fillStyle = kol(s.kolor); x.textAlign = 'left'; x.fillRect(lx, 5, 10, 3); x.fillStyle = kolor('--tekst'); x.fillText(s.nazwa, lx + 14, 11); lx += x.measureText(s.nazwa).width + 30;
     }
   }
   function histogram(c, wartosci, prawdziwy) {
+    rysunki.set(c, () => histogram(c, wartosci, prawdziwy));
     const { x, w, h } = plotno(c), L = 34, R = 10, T = 18, B = 22;
     let mn = Math.min(prawdziwy, ...wartosci), mx = Math.max(prawdziwy, ...wartosci);
     const pad = (mx - mn) * 0.05 || 0.05; mn -= pad; mx += pad;
@@ -72,6 +78,7 @@
     x.fillStyle = kolor('--szary'); x.textAlign = 'left'; x.fillText('PF najlepszych parametrów na przetasowanych danych', L, 11);
   }
   function mapaParametrow(c, st, kombi, pfs, naj) {
+    rysunki.set(c, () => mapaParametrow(c, st, kombi, pfs, naj));
     const { x, w, h } = plotno(c);
     const barwa = v => {               // czerwony < 1 < zielony
       const t = Math.max(-1, Math.min(1, (v - 1) / 0.3));
@@ -160,8 +167,8 @@
       <div class="maly" style="margin-top:6px">Opłaty i funding podane w % kapitału startowego (z dźwignią rosną razem z wartością pozycji). Likwidację sprawdzam na najniższej/najwyższej cenie każdej świecy,
       przy depozycie podtrzymującym ${fmt(mm * 100, 2)}%. Wynik 1× może się wyraźnie różnić od bramki 3. Tu wartość pozycji jest stała od wejścia (jak na giełdzie), a bramki odnawiają pozycję co świecę. ${fmt(lat, 1)} r. danych spoza próby.</div>`);
     const doWykresu = k => { const y = new Float64Array(k.krzywa.length); for (let i = 0; i < y.length; i++) y[i] = Math.log(Math.max(0.01, k.krzywa[i] || (k.wyzerowane ? 0 : 1))); return y; };
-    const serie = [{ y: doWykresu(jeden), kolor: kolor('--wykres2'), nazwa: '1×' }];
-    if (L !== 1) serie.push({ y: doWykresu(moj), kolor: moj.wyzerowane ? kolor('--strata') : kolor('--akcent'), nazwa: L + '×', gruba: true });
+    const serie = [{ y: doWykresu(jeden), kolor: '--wykres2', nazwa: '1×' }];
+    if (L !== 1) serie.push({ y: doWykresu(moj), kolor: moj.wyzerowane ? '--strata' : '--akcent', nazwa: L + '×', gruba: true });
     wykresKrzywej($('cdz'), s.t.subarray(b, s.n), serie);
   }
 
@@ -224,7 +231,7 @@
         <h3>Wynik dla każdego ustawienia (PF)</h3><canvas class="wysoki" id="c1m"></canvas>
         <h3>Krzywa w modelu bramek (1×, po kosztach)</h3><canvas id="c1k"></canvas>`);
       mapaParametrow($('c1m'), st, opt.kombi, opt.pfs, opt.naj);
-      wykresKrzywej($('c1k'), s.t.subarray(a, b), [{ y: kupTrzymaj(s, a, b), kolor: kolor('--wykres2'), nazwa: 'kup i trzymaj' }, { y: narastajaco(ret, a, b), kolor: kolor('--akcent'), nazwa: 'strategia', gruba: true }]);
+      wykresKrzywej($('c1k'), s.t.subarray(a, b), [{ y: kupTrzymaj(s, a, b), kolor: '--wykres2', nazwa: 'kup i trzymaj' }, { y: narastajaco(ret, a, b), kolor: '--akcent', nazwa: 'strategia', gruba: true }]);
       if (!ok1 && !porazka) porazka = 1;
       if (porazka && !pokazWszystkie) return zakoncz(raport, porazka);
 
@@ -269,7 +276,7 @@
         <tr><td>Strategia</td>${Object.values(lataTab).map(o => `<td>${proc((Math.exp(o.s) - 1) * 100, 0)}</td>`).join('')}</tr>
         <tr><td>Kup i trzymaj</td>${Object.values(lataTab).map(o => `<td>${proc((Math.exp(o.bh) - 1) * 100, 0)}</td>`).join('')}</tr></table></div>
         <div class="maly" style="margin-top:6px">Najczęściej wybierane parametry: ${topP.map(([k, v]) => `${k} (${v}×)`).join(', ')}.</div>`);
-      wykresKrzywej($('c3'), s.t.subarray(b, s.n), [{ y: kupTrzymaj(s, b, s.n), kolor: kolor('--wykres2'), nazwa: 'kup i trzymaj' }, { y: narastajaco(wf.ret, b, s.n), kolor: kolor('--akcent'), nazwa: 'walk-forward', gruba: true }]);
+      wykresKrzywej($('c3'), s.t.subarray(b, s.n), [{ y: kupTrzymaj(s, b, s.n), kolor: '--wykres2', nazwa: 'kup i trzymaj' }, { y: narastajaco(wf.ret, b, s.n), kolor: '--akcent', nazwa: 'walk-forward', gruba: true }]);
       symulacjaDzwigni(s, wf.held, b, koszt, raport);
       if (!ok3 && !porazka) porazka = 3;
       if (porazka && !pokazWszystkie) return zakoncz(raport, porazka);

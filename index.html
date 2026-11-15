@@ -20,6 +20,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="styl.css">
+<script src="silnik/motyw.js"></script>
 <script src="js/serwer-w-telefonie.js"></script>
 </head>
 <body>
@@ -54,6 +55,15 @@
           <p class="male">Zalogowano: <b id="kontoEmail"></b></p>
           <p class="male">Bez logowania aplikacja pokazuje tylko ekran logowania. Wylogowanie usuwa też z telefonu kopię migawek panelu; pobrane dane rynkowe i ustawienia zostają.</p>
           <div class="przyciski"><button id="wyloguj" class="drugi">Wyloguj</button></div>
+        </section>
+
+        <section class="karta">
+          <h2>Wygląd</h2>
+          <p class="male">Motyw całej aplikacji: Panel, Dziennik, Asystent, Laboratorium i ten ekran. Telefon zapamięta wybór.</p>
+          <div class="motyw-wybor" role="group" aria-label="Motyw aplikacji">
+            <button type="button" data-motyw-ustaw="morski" aria-pressed="false"><span class="probka probka-morski" aria-hidden="true"><i></i><i></i><i></i></span><b>Morski</b><span>ciemny, zielona poświata</span></button>
+            <button type="button" data-motyw-ustaw="papier" aria-pressed="false"><span class="probka probka-papier" aria-hidden="true"><i></i><i></i><i></i></span><b>Papier</b><span>jasny, granat i szeryfy</span></button>
+          </div>
         </section>
 
         <section class="karta" id="kartaDane">

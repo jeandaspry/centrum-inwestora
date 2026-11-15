@@ -27,7 +27,8 @@
   async function pobierzDziennik() {
     const r = await fetch('/api/dziennik', { cache: 'no-store' });
     if (!r.ok) { let t = ''; try { t = (await r.text()).slice(0, 200); } catch (e) { } throw new Error(t || 'serwer nie podał dziennika (' + r.status + ')'); }
-    return r.json();
+    try { return await r.json(); }
+    catch (e) { await new Promise(ok => setTimeout(ok, 400)); const r2 = await fetch('/api/dziennik', { cache: 'no-store' }); return r2.json(); }   // plik w trakcie zapisu – jeszcze raz
   }
   async function wczytaj() {
     stan('laduje', 'wczytuję…');
@@ -138,7 +139,8 @@
       let ile = 0;
       for (const t of S.lista) {
         if (t.otwarta) continue;
-        const { wpis, pola } = DZ.wypelnij(S.W.wpisy[t.id], DZ.propozycja(t), odNowa === true);
+        // baza = wpis scalony z planem sprzed wejścia (t.wpis) – plan ma pierwszeństwo przed propozycją
+        const { wpis, pola } = DZ.wypelnij(Object.assign({}, S.W.wpisy[t.id] || {}, t.plan ? t.wpis : {}), DZ.propozycja(t), odNowa === true);
         if (pola.length) { ustawWpis(t.id, wpis); ile++; }
       }
       await zapisz();
@@ -184,7 +186,7 @@
       for (let k = 0; k <= 4; k++) { const v = lo + (hi - lo) * k / 4; c.strokeStyle = 'rgba(255,255,255,.06)'; c.beginPath(); c.moveTo(L, y(v)); c.lineTo(W - P, y(v)); c.stroke(); c.fillText(Math.round(v) + ' $', L - 6, y(v) + 4); }
       c.textAlign = 'left';
     }
-    c.save(); c.strokeStyle = 'rgba(255,255,255,.28)'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(L, y(0)); c.lineTo(W - P, y(0)); c.stroke(); c.restore();
+    c.save(); c.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--wyk-zero').trim() || 'rgba(255,255,255,.28)'; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(L, y(0)); c.lineTo(W - P, y(0)); c.stroke(); c.restore();
     for (const s of serie) {
       const sciezka = () => { c.beginPath(); s.dane.forEach((v, i) => (i ? c.lineTo(x(i), y(v)) : c.moveTo(x(i), y(v)))); };
       if (s.wypelnij) {
@@ -214,7 +216,12 @@
       <div class="w-mini" id="heroWykres"></div>`;
     if (S.wHero) { S.wHero.usun(); S.wHero = null; }
     if (window.DZW && DZW.dostepne()) { let s = 0; S.wHero = DZW.mini($('heroWykres')); S.wHero.ustaw([{ t: (z[0] ? z[0].otwarcie : Date.now()) - 60000, v: 0 }, ...z.map(t => ({ t: t.zamkniecie, v: (s += t.netto) }))], o.netto >= 0); }
-    else wykresLinia($('heroWykres'), [{ dane: seria, kolor: o.netto >= 0 ? '#43f0c6' : '#ff8a8a', wypelnij: o.netto >= 0 ? 'rgba(67,240,198,.30)' : 'rgba(255,107,107,.26)' }]);
+    else {
+      // zapas bez biblioteki wykresów: zwykły rysunek na płótnie w kolorach motywu
+      const cv = document.createElement('canvas'); cv.style.cssText = 'width:100%;height:100%;display:block'; $('heroWykres').appendChild(cv);
+      const z0 = (n, d) => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || d;
+      wykresLinia(cv, [{ dane: seria, kolor: o.netto >= 0 ? z0('--wyk-plus', '#43f0c6') : z0('--wyk-minus', '#ff8a8a'), wypelnij: o.netto >= 0 ? z0('--wyk-plus-gora', 'rgba(67,240,198,.30)') : z0('--wyk-minus-gora', 'rgba(255,107,107,.26)') }]);
+    }
     const kafel = (et, w, p) => `<div class="kafel"><div class="et">${et}</div><div class="wart">${w}</div><div class="pod">${p}</div></div>`;
     $('kafle').innerHTML = [
       kafel('Skuteczność', proc(o.skut), `${o.wygrane} z ${o.n} na plus`),
@@ -533,7 +540,7 @@
     const el = $('krzywa'); if (!el) return;
     const z = S.lista.filter(t => !t.otwarta).sort((a, b) => a.zamkniecie - b.zamkniecie);
     let a = 0, b = 0; const pkt = [{ t: (z[0] ? z[0].otwarcie : Date.now()) - 60000, a: 0, b: 0 }];
-    for (const t of z) { a += t.netto; if (DZ.zgodneKiedy(t)) b += t.netto; pkt.push({ t: t.zamkniecie, a, b, netto: t.netto, opis: t.strona.toUpperCase() + ' ' + rynekLadnie(t.rynek) }); }
+    for (const t of z) { a += t.netto; if (DZ.zgodneKiedy(t)) b += t.netto; pkt.push({ t: t.zamkniecie, a, b, netto: t.netto, opis: E_(t.strona.toUpperCase() + ' ' + rynekLadnie(t.rynek)) }); }
     if (window.DZW && DZW.dostepne()) { if (!S.wKrzywa) S.wKrzywa = DZW.krzywa(el); S.wKrzywa.ustaw(pkt); }
     else el.innerHTML = '<p class="b-male">Nie wczytała się biblioteka wykresów.</p>';
     $('krzywaOpis').textContent = `${ileTrade(z.length)}. Wszystkie razem: ${usd(a)}. Gdybyś pominął trade'y łamiące zasady 4–7 (longi pod EMA200, wejście po stracie, po dużym zysku, więcej niż 2 dziennie): ${usd(b)} z ${ileTrade(S.wn.kiedy.n)}. Wszystkich 9 zasad (z SL i ryzykiem 1–2%) nie spełnił żaden trade. To rachunek wstecz na tych samych danych – nie gwarancja na przyszłość.`;

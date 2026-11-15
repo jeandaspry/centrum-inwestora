@@ -6,12 +6,14 @@
 <!-- Wersja na telefon: zbudowana przez Centrum-Inwestora/narzedzia/zbuduj-telefon.ps1 z Laboratorium-Backtestow/aplikacja – nie edytuj ręcznie. -->
 <script src="../js/tylko-w-aplikacji.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="motyw.js"></script>
 <title>Asystent rynku</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="asystent.css">
 <link rel="stylesheet" href="../telefon-strony.css">
+<link rel="stylesheet" href="papier.css">
 <script src="../js/serwer-w-telefonie.js"></script>
 <script src="centrum-most.js"></script>
 </head>
@@ -24,6 +26,7 @@
     </span>
     <span class="rozpychacz"></span>
     <span class="stan" id="stan"><span class="kropka laduje"></span> uruchamiam…</span>
+    <button type="button" class="motyw-przelacz" data-motyw-przelacz title="Zmień motyw: Morski (ciemny) ↔ Papier (jasny)" aria-label="Zmień motyw"></button>
     <a class="przycisk" href="laboratorium.html" data-centrum="laboratorium" title="Laboratorium backtestów – sprawdzanie strategii 4 bramkami">Laboratorium →</a>
   </div>
   <nav class="nawigacja">
@@ -56,7 +59,7 @@
     <h3>Co działo się w podobnych układach przy wybranej dźwigni</h3>
     <div class="szanse" id="szanse"></div>
     <div class="legenda">
-      <span style="--k:#43f0c6">cel</span><span style="--k:rgba(255,255,255,.28)">czas minął</span><span style="--k:#ffd166">stop</span><span style="--k:#ff6b6b">likwidacja</span>
+      <span style="--k:var(--s-plus)">cel</span><span style="--k:rgba(var(--rgb-j),.28)">czas minął</span><span style="--k:var(--warning)">stop</span><span style="--k:var(--critical)">likwidacja</span>
     </div>
     <div id="terazUwagi"></div>
   </section>

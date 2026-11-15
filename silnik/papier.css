@@ -1,0 +1,253 @@
+/* Motyw „Papier” – jasny, spokojny, jak dobrze złożona gazeta finansowa: ciepła biel, granatowy tekst i przyciski,
+ * nagłówki szeryfowe (Fraunces), tekst IBM Plex Sans, liczby IBM Plex Mono, płaskie karty z cienką ramką.
+ * Działa tylko gdy <html data-motyw="papier"> (ustawia motyw.js). Motyw morski (asystent.css, laboratorium.css,
+ * dziennik.css) zostaje nietknięty – ten plik niczego nie zmienia, dopóki Papier nie jest włączony.
+ * Wyjątek: na dole przełącznik motywu (.motyw-przelacz), widoczny w obu motywach. */
+
+/* ================= tokeny ================= */
+:root[data-motyw="papier"] {
+  color-scheme: light;
+  --rgb-j: 28, 35, 51; --rgb-akcent: 31, 58, 104; --rgb-plus: 30, 122, 76; --rgb-minus: 180, 67, 43; --rgb-info: 46, 106, 158; --rgb-ostrz: 168, 107, 18;
+  --tlo: #f6f3ec; --karta: #fffdf8; --p-kafel: #faf7f0; --p-ramka: #e5dfd3; --p-ramka2: #d6cebd; --p-wglebienie: #efeae0;
+  --tekst: #1c2333; --tekst2: #4a5468; --tekst3: #646c7f; --tekst-mocny: #141a29; --szary: #6b7385;
+  --linia: rgba(28, 35, 51, .12); --linia2: rgba(28, 35, 51, .07); --wykres2: rgba(74, 84, 104, .5);
+  --akcent: #1f3a68; --akcent-tlo: rgba(31, 58, 104, .08); --na-akcencie: #ffffff;
+  --plus: #1e7a4c; --minus: #b4432b; --s-plus: #1e7a4c; --s-minus: #b4432b;
+  --zysk: #1e7a4c; --strata: #b4432b; --ostrz: #93600e;
+  --ok: #1e7a4c; --info: #2e6a9e; --warning: #93600e; --serious: #b8591f; --critical: #b4432b;
+  --ok-tlo: rgba(30, 122, 76, .09); --info-tlo: rgba(46, 106, 158, .09); --warning-tlo: rgba(168, 107, 18, .1); --critical-tlo: rgba(180, 67, 43, .08);
+  --zysk-tlo: rgba(30, 122, 76, .09); --strata-tlo: rgba(180, 67, 43, .08); --ostrz-tlo: rgba(168, 107, 18, .1);
+  --plus-tlo: rgba(30, 122, 76, .09); --minus-tlo: rgba(180, 67, 43, .08);
+  --pole-tlo: #fffdf8; --pole-tlo2: #fffdf8; --pole-tlo-hover: #f2eee5; --wejscie-tlo: #fffdf8; --pasek-tlo: rgba(246, 243, 236, .9);
+  --as-slupki: rgba(31, 58, 104, .22); --as-poswiata: 0;
+  --r: 12px;
+  --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --szeryf: "Fraunces", "Iowan Old Style", Georgia, "Times New Roman", serif;
+  --szklo: #fffdf8;
+  --przycisk-glowny: linear-gradient(180deg, #27477e, #1c335c);
+  --cien: 0 1px 2px rgba(28, 35, 51, .05), 0 8px 22px -14px rgba(28, 35, 51, .2);
+  /* wykresy (dziennik-wykresy.js, dziennik.js) */
+  --wyk-tekst: rgba(28, 35, 51, .62); --wyk-siatka-pion: rgba(28, 35, 51, .035); --wyk-siatka: rgba(28, 35, 51, .07); --wyk-ramka: rgba(28, 35, 51, .14);
+  --wyk-celownik: rgba(31, 58, 104, .4); --wyk-celownik-tlo: #1f3a68;
+  --wyk-wzrost: #1e7a4c; --wyk-spadek: #b4432b; --wyk-knot-wzrost: rgba(30, 122, 76, .75); --wyk-knot-spadek: rgba(180, 67, 43, .75);
+  --wyk-wol-wzrost: rgba(30, 122, 76, .2); --wyk-wol-spadek: rgba(180, 67, 43, .2);
+  --wyk-wejscie: #1c2333; --wyk-wyjscie: #a86b12; --wyk-sl: #b4432b; --wyk-tp: #1e7a4c; --wyk-plan: #2e6a9e;
+  --wyk-kup: #1e7a4c; --wyk-sprzedaj: #b4432b;
+  --wyk-krzywa: #1f3a68; --wyk-krzywa-gora: rgba(31, 58, 104, .16); --wyk-krzywa-dol: rgba(31, 58, 104, 0); --wyk-krzywa2: #1e7a4c;
+  --wyk-zero: rgba(28, 35, 51, .3); --wyk-zero-mini: rgba(28, 35, 51, .28); --wyk-celownik-mini: rgba(28, 35, 51, .3);
+  --wyk-czcionka: "IBM Plex Mono", ui-monospace, monospace;
+  --wyk-plus: #1e7a4c; --wyk-plus-gora: rgba(30, 122, 76, .2); --wyk-plus-dol: rgba(30, 122, 76, 0);
+  --wyk-minus: #b4432b; --wyk-minus-gora: rgba(180, 67, 43, .18); --wyk-minus-dol: rgba(180, 67, 43, 0);
+  --wyk-dymek: rgba(255, 253, 248, .97); --wyk-dymek-tekst: #1c2333;
+  scrollbar-color: rgba(28, 35, 51, .28) transparent;
+}
+
+/* ================= podstawy ================= */
+[data-motyw="papier"] body {
+  font-family: var(--sans); font-size: 14.5px; font-weight: 400; letter-spacing: 0; color: var(--tekst);
+  background: var(--tlo); background-image: radial-gradient(90% 50% at 50% -8%, #fcfbf7 0%, transparent 70%); background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+[data-motyw="papier"] body::before { display: none; }
+html[data-motyw="papier"][data-w-centrum] body { background: transparent; }
+[data-motyw="papier"] ::selection { background: rgba(31, 58, 104, .16); color: inherit; }
+[data-motyw="papier"] h1, [data-motyw="papier"] h2, [data-motyw="papier"] h3 { font-family: var(--sans); }
+[data-motyw="papier"] h3 { font-weight: 600; }
+[data-motyw="papier"] a { color: var(--akcent); text-decoration-color: rgba(31, 58, 104, .35); }
+[data-motyw="papier"] a:hover { text-decoration-color: currentColor; }
+[data-motyw="papier"] .male, [data-motyw="papier"] .maly { color: var(--tekst2); }
+[data-motyw="papier"] .num, [data-motyw="papier"] .wart, [data-motyw="papier"] .cena-t { font-family: var(--mono); letter-spacing: -.01em; }
+[data-motyw="papier"] table:not(.tab) { font-family: var(--mono); font-size: .78rem; }
+[data-motyw="papier"] th { font-family: var(--sans); font-weight: 600; color: var(--tekst3); }
+[data-motyw="papier"] tr.wazny td, [data-motyw="papier"] tr.wazny:hover td { background: rgba(31, 58, 104, .07); }
+
+/* ================= górny pasek i zakładki (podkreślenie zamiast pigułek) ================= */
+[data-motyw="papier"] .pasek { background: var(--pasek-tlo); border-bottom: 1px solid var(--p-ramka); -webkit-backdrop-filter: blur(12px) saturate(1.1); backdrop-filter: blur(12px) saturate(1.1); }
+[data-motyw="papier"] .pasek h1 { font: 600 1.28rem/1.15 var(--szeryf); letter-spacing: -.012em; color: var(--tekst-mocny); }
+[data-motyw="papier"] .pasek h1::before { background: var(--akcent); }
+[data-motyw="papier"] .pasek-wn:has(> .nawigacja) { padding-bottom: 0; }
+[data-motyw="papier"] .nawigacja { gap: 2px; padding: 4px 0 0; }
+[data-motyw="papier"] .nawigacja a { font: 600 .88rem/1 var(--sans); color: var(--tekst2); padding: 10px 12px 12px; border-radius: 0; border: 0; background: none; box-shadow: inset 0 -2px 0 transparent; transition: color .15s, box-shadow .15s; }
+[data-motyw="papier"] .nawigacja a:hover { color: var(--tekst-mocny); background: none; box-shadow: inset 0 -2px 0 var(--p-ramka2); }
+[data-motyw="papier"] .nawigacja a.wl { color: var(--akcent); background: none; box-shadow: inset 0 -2px 0 var(--akcent); }
+[data-motyw="papier"] .stan { color: var(--tekst2); }
+[data-motyw="papier"] .kropka.zywe { background: var(--plus); box-shadow: 0 0 0 3px rgba(30, 122, 76, .16); }
+
+/* ================= przyciski, pola, przełączniki ================= */
+[data-motyw="papier"] button, [data-motyw="papier"] .przycisk {
+  font-family: var(--sans); font-weight: 600; letter-spacing: 0; color: var(--tekst-mocny); border-radius: 8px;
+  background: #fffdf8; border: 1px solid var(--p-ramka2); box-shadow: 0 1px 0 rgba(28, 35, 51, .04);
+}
+[data-motyw="papier"] button:hover, [data-motyw="papier"] .przycisk:hover { background: #f3efe6; border-color: #c4baa6; }
+[data-motyw="papier"] button.glowny, [data-motyw="papier"] #start {
+  background: var(--przycisk-glowny); color: #fff; border: 1px solid #19305a; font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 6px 14px -8px rgba(31, 58, 104, .7);
+}
+[data-motyw="papier"] button.glowny:hover, [data-motyw="papier"] #start:hover { background: var(--przycisk-glowny); filter: brightness(1.14); }
+[data-motyw="papier"] button.drugi { color: var(--tekst2); }
+[data-motyw="papier"] input[type=number], [data-motyw="papier"] input[type=text], [data-motyw="papier"] input:not([type]),
+[data-motyw="papier"] select, [data-motyw="papier"] textarea {
+  font-family: var(--sans); color: var(--tekst-mocny); background: #fffdf8; border: 1px solid var(--p-ramka2); border-radius: 8px;
+}
+[data-motyw="papier"] input[type=number], [data-motyw="papier"] .pole input[inputmode=decimal], [data-motyw="papier"] .pole input[inputmode=numeric] { font-family: var(--mono); }
+[data-motyw="papier"] input:focus, [data-motyw="papier"] select:focus { border-color: var(--akcent); box-shadow: 0 0 0 3px rgba(31, 58, 104, .14); }
+[data-motyw="papier"] input::placeholder, [data-motyw="papier"] textarea::placeholder { color: #9aa0ad; }
+[data-motyw="papier"] select option { background: #fffdf8; color: var(--tekst); }
+[data-motyw="papier"] label { color: var(--tekst3); font-weight: 500; }
+/* przełączniki segmentowe: biały „klawisz” na wgłębionym tle */
+[data-motyw="papier"] .przelacznik, [data-motyw="papier"] .w-iw { background: var(--p-wglebienie); border: 1px solid var(--p-ramka); border-radius: 9px; padding: 3px; }
+[data-motyw="papier"] .przelacznik button, [data-motyw="papier"] .w-iw button { border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--tekst2); }
+[data-motyw="papier"] .przelacznik button:hover, [data-motyw="papier"] .w-iw button:hover { background: rgba(255, 253, 248, .6); color: var(--tekst-mocny); }
+[data-motyw="papier"] .przelacznik button.wl, [data-motyw="papier"] .w-iw button.wl { background: #fffdf8; color: var(--akcent); font-weight: 700; box-shadow: 0 1px 2px rgba(28, 35, 51, .14), 0 0 0 1px rgba(28, 35, 51, .05); }
+/* filtry i wybory: zaznaczone = granatowe */
+[data-motyw="papier"] .filtry-pasek button, [data-motyw="papier"] .chipy button, [data-motyw="papier"] .szybkie button { border-radius: 8px; background: #fffdf8; border: 1px solid var(--p-ramka2); color: var(--tekst2); }
+[data-motyw="papier"] .filtry-pasek button.wl, [data-motyw="papier"] .chipy button.wl, [data-motyw="papier"] .szybkie button.wl { background: var(--akcent); border-color: var(--akcent); color: #fff; box-shadow: none; }
+[data-motyw="papier"] .chipy.bledy button.wl { background: var(--minus); border-color: var(--minus); color: #fff; }
+/* suwaki */
+[data-motyw="papier"] input[type=range] { background: linear-gradient(90deg, #1e7a4c 0%, #a86b12 55%, #b4432b 100%); }
+[data-motyw="papier"] input[type=range]::-webkit-slider-thumb { background: #fffdf8; border: 3px solid var(--akcent); box-shadow: 0 1px 4px rgba(28, 35, 51, .3); }
+[data-motyw="papier"] input[type=range]::-moz-range-thumb { background: #fffdf8; border: 3px solid var(--akcent); box-shadow: 0 1px 4px rgba(28, 35, 51, .3); }
+[data-motyw="papier"] .suwak input[type=range] { background: linear-gradient(90deg, #ddd5c5, #1f3a68); accent-color: var(--akcent); }
+[data-motyw="papier"] .pasek-postepu { background: var(--p-wglebienie); }
+[data-motyw="papier"] .pasek-postepu i { background: var(--akcent); box-shadow: none; }
+
+/* ================= karty i kafelki ================= */
+[data-motyw="papier"] .karta { background: var(--karta); border: 1px solid var(--p-ramka); border-radius: 12px; box-shadow: var(--cien); }
+[data-motyw="papier"] .karta > h2, [data-motyw="papier"] .sekcja-tytul h2 { font: 600 1.2rem/1.3 var(--szeryf); letter-spacing: -.012em; color: var(--tekst-mocny); }
+[data-motyw="papier"] .karta > h2::before { background: var(--akcent); opacity: .85; }
+[data-motyw="papier"] .karta > h2 .podtytul { font-family: var(--sans); font-weight: 500; color: var(--tekst3); }
+[data-motyw="papier"] .tytul-strony { font: 600 2.15rem/1.1 var(--szeryf); letter-spacing: -.022em; text-shadow: none; color: var(--tekst-mocny); }
+[data-motyw="papier"] .tytul-strony .cena { font-family: var(--mono); font-size: 1.05rem; }
+[data-motyw="papier"] .kafel, [data-motyw="papier"] .liczby div, [data-motyw="papier"] .panel-dzw, [data-motyw="papier"] .dzis-pole,
+[data-motyw="papier"] .blok, [data-motyw="papier"] .zasada, [data-motyw="papier"] .ramka {
+  background: var(--p-kafel); border: 1px solid #ebe5d9; border-radius: 10px; box-shadow: none;
+}
+[data-motyw="papier"] .kafel .wart, [data-motyw="papier"] .liczby b { font-family: var(--mono); font-weight: 600; letter-spacing: -.02em; }
+[data-motyw="papier"] .kafel .et, [data-motyw="papier"] .liczby div > span { color: var(--tekst3); }
+[data-motyw="papier"] .kafel.tp { border-left: 3px solid var(--plus); } [data-motyw="papier"] .kafel.sl { border-left: 3px solid var(--warning); }
+[data-motyw="papier"] .kafel.lik { border-left: 3px solid var(--critical); } [data-motyw="papier"] .kafel.we { border-left: 3px solid var(--tekst3); }
+[data-motyw="papier"] .ramka.uwaga, [data-motyw="papier"] .ostrzezenie { background: var(--warning-tlo); border-color: rgba(168, 107, 18, .35); }
+[data-motyw="papier"] .ramka.blad { background: var(--critical-tlo); border-color: rgba(180, 67, 43, .35); }
+[data-motyw="papier"] .ramka.ok { background: var(--ok-tlo); border-color: rgba(30, 122, 76, .35); }
+[data-motyw="papier"] .ostrzezenie { border-radius: 10px; }
+/* znaczniki */
+[data-motyw="papier"] .znacznik, [data-motyw="papier"] .znak { background: #f1ede4; border-color: var(--p-ramka); color: var(--tekst2); }
+[data-motyw="papier"] .znacznik.ok, [data-motyw="papier"] .znak.ok { color: var(--plus); background: var(--ok-tlo); border-color: rgba(30, 122, 76, .3); }
+[data-motyw="papier"] .znacznik.uwaga, [data-motyw="papier"] .znak.pom { color: var(--warning); background: var(--warning-tlo); border-color: rgba(168, 107, 18, .3); }
+[data-motyw="papier"] .znacznik.zle, [data-motyw="papier"] .znak.zle { color: var(--minus); background: var(--critical-tlo); border-color: rgba(180, 67, 43, .3); }
+[data-motyw="papier"] .znacznik.info { color: var(--info); background: var(--info-tlo); border-color: rgba(46, 106, 158, .3); }
+
+/* ================= Asystent ================= */
+[data-motyw="papier"] .decyzja { font-family: var(--szeryf); font-weight: 600; letter-spacing: -.03em; text-shadow: none; }
+[data-motyw="papier"] .decyzja.long, [data-motyw="papier"] .decyzja.short { text-shadow: none; }
+[data-motyw="papier"] .dzw-wart b, [data-motyw="papier"] .fng b { font-family: var(--szeryf); font-weight: 600; letter-spacing: -.025em; }
+[data-motyw="papier"] .pasek-szans { background: var(--p-wglebienie); }
+[data-motyw="papier"] .pasek-szans .c { background: var(--plus); box-shadow: none; }
+[data-motyw="papier"] .pasek-szans .t { background: rgba(28, 35, 51, .2); }
+[data-motyw="papier"] .miernik, [data-motyw="papier"] .mini { background: #e6e0d3; }
+[data-motyw="papier"] .miernik i { background: #fffdf8; border-color: var(--akcent); box-shadow: 0 1px 3px rgba(28, 35, 51, .3); }
+[data-motyw="papier"] .miernik.strefy { background: linear-gradient(90deg, rgba(180, 67, 43, .42) 0 30%, #e6e0d3 30% 70%, rgba(30, 122, 76, .42) 70% 100%); }
+[data-motyw="papier"] .fng .miernik { background: linear-gradient(90deg, #b4432b, #a86b12 50%, #1e7a4c); }
+[data-motyw="papier"] .news li a { color: var(--tekst); }
+
+/* ================= Dziennik ================= */
+[data-motyw="papier"] .hero-wynik, [data-motyw="papier"] .hero-wynik.strata {
+  background: var(--karta); border: 1px solid var(--p-ramka); border-radius: 12px; box-shadow: inset 0 3px 0 var(--plus), var(--cien);
+}
+[data-motyw="papier"] .hero-wynik.strata { box-shadow: inset 0 3px 0 var(--minus), var(--cien); }
+[data-motyw="papier"] .hero-wynik .kwota { font-family: var(--szeryf); font-weight: 600; font-size: 2.45rem; letter-spacing: -.025em; }
+[data-motyw="papier"] .hero-wynik .et, [data-motyw="papier"] .wniosek .temat { color: var(--tekst3); letter-spacing: .1em; }
+[data-motyw="papier"] .dzis-pole .ikona { background: var(--p-wglebienie); border-radius: 8px; }
+[data-motyw="papier"] .dzis-pole.ok .ikona { background: var(--plus-tlo); } [data-motyw="papier"] .dzis-pole.uwaga .ikona { background: var(--warning-tlo); } [data-motyw="papier"] .dzis-pole.zle .ikona { background: var(--minus-tlo); }
+[data-motyw="papier"] .dzis-pole.zle { border-color: rgba(180, 67, 43, .3); } [data-motyw="papier"] .dzis-pole.uwaga { border-color: rgba(168, 107, 18, .3); }
+/* dni */
+[data-motyw="papier"] .dzien-nawig button { border-radius: 8px; }
+[data-motyw="papier"] .dzien-chip { background: #fffdf8; border: 1px solid var(--p-ramka); border-radius: 10px; }
+[data-motyw="papier"] .dzien-chip.plus { background: linear-gradient(180deg, rgba(30, 122, 76, .08), rgba(30, 122, 76, .015)), #fffdf8; border-color: rgba(30, 122, 76, .3); }
+[data-motyw="papier"] .dzien-chip.minus { background: linear-gradient(180deg, rgba(180, 67, 43, .08), rgba(180, 67, 43, .015)), #fffdf8; border-color: rgba(180, 67, 43, .3); }
+[data-motyw="papier"] .dzien-chip.wl { outline: 2px solid var(--akcent); border-color: transparent; }
+[data-motyw="papier"] .dzien-chip:hover { border-color: var(--p-ramka2); }
+[data-motyw="papier"] .dzien-chip .wn { font-weight: 700; }
+/* postęp */
+[data-motyw="papier"] .postep { background: var(--p-wglebienie); border-radius: 8px; }
+[data-motyw="papier"] .postep i { background: rgba(31, 58, 104, .2); }
+/* trade'y */
+[data-motyw="papier"] .trade { background: #fffdf8; border: 1px solid var(--p-ramka); border-radius: 10px; }
+[data-motyw="papier"] .trade::before { width: 3px; }
+[data-motyw="papier"] .trade.plus { --pas: var(--plus); } [data-motyw="papier"] .trade.minus { --pas: var(--minus); }
+[data-motyw="papier"] .trade:hover { border-color: rgba(31, 58, 104, .35); background: #fbf8f1; }
+[data-motyw="papier"] .trade.plan { border-color: rgba(46, 106, 158, .45); --pas: var(--info); }
+[data-motyw="papier"] .trade .kwota { font-weight: 700; }
+[data-motyw="papier"] .trade .kier { border-radius: 6px; }
+[data-motyw="papier"] .dzien-naglowek { color: var(--tekst2); border-bottom: 1px solid var(--p-ramka); padding-bottom: 6px; }
+[data-motyw="papier"] .kier.long { color: var(--plus); background: var(--plus-tlo); box-shadow: inset 0 0 0 1px rgba(30, 122, 76, .3); }
+[data-motyw="papier"] .kier.short { color: var(--minus); background: var(--minus-tlo); box-shadow: inset 0 0 0 1px rgba(180, 67, 43, .3); }
+[data-motyw="papier"] .flaga { background: #f1ede4; border-color: var(--p-ramka); color: var(--tekst2); font-weight: 500; }
+[data-motyw="papier"] .flaga.zle { color: #9c3622; background: var(--minus-tlo); border-color: rgba(180, 67, 43, .25); }
+[data-motyw="papier"] .flaga.ok { color: #1a6a42; background: var(--plus-tlo); border-color: rgba(30, 122, 76, .25); }
+[data-motyw="papier"] .flaga.uwaga { color: #875609; background: var(--warning-tlo); border-color: rgba(168, 107, 18, .25); }
+[data-motyw="papier"] .flaga.info { color: #285f8e; background: var(--info-tlo); border-color: rgba(46, 106, 158, .25); }
+[data-motyw="papier"] .flaga.setup { color: var(--akcent); background: rgba(31, 58, 104, .07); border-color: rgba(31, 58, 104, .25); }
+[data-motyw="papier"] .flaga.wpis-pelny { color: #1a6a42; } [data-motyw="papier"] .flaga.wpis-auto { color: #285f8e; }
+[data-motyw="papier"] .flaga.wpis-pusty { background: transparent; border-color: var(--p-ramka2); }
+[data-motyw="papier"] .auto-zn { color: #285f8e; }
+[data-motyw="papier"] .pusto { border-color: var(--p-ramka2); }
+/* okno trade'u */
+[data-motyw="papier"] .okno { background: rgba(28, 35, 51, .34); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+[data-motyw="papier"] .okno-wn { background: #fffdf8; border: 1px solid var(--p-ramka); border-radius: 14px; box-shadow: 0 30px 80px -30px rgba(28, 35, 51, .5); }
+[data-motyw="papier"] .okno-gora { background: rgba(255, 253, 248, .96); border-bottom-color: var(--p-ramka); border-radius: 14px 14px 0 0; }
+[data-motyw="papier"] .okno-gora h2 { font-family: var(--szeryf); font-weight: 600; letter-spacing: -.01em; }
+[data-motyw="papier"] .okno-gora h2 .kwota { font-family: var(--mono); font-weight: 700; }
+[data-motyw="papier"] .zamknij { border-radius: 8px; }
+[data-motyw="papier"] .blok h3 { color: var(--tekst-mocny); }
+[data-motyw="papier"] .wykres, [data-motyw="papier"] .wykres-lw .w-plotno { background: #fbf9f4; box-shadow: inset 0 0 0 1px #ebe5d9; border-radius: 8px; }
+[data-motyw="papier"] .decyzja-mala { border-radius: 8px; }
+[data-motyw="papier"] .decyzja-mala.long { color: var(--plus); } [data-motyw="papier"] .decyzja-mala.short { color: var(--minus); } [data-motyw="papier"] .decyzja-mala.czekaj { color: var(--warning); }
+[data-motyw="papier"] .pole { color: var(--tekst2); }
+[data-motyw="papier"] .pole input, [data-motyw="papier"] .pole select, [data-motyw="papier"] .pole textarea { border-radius: 8px; }
+[data-motyw="papier"] .oceny button { border-radius: 8px; }
+[data-motyw="papier"] .oceny button.wl[data-v="A"] { background: #1e7a4c; border-color: #1e7a4c; color: #fff; }
+[data-motyw="papier"] .oceny button.wl[data-v="B"] { background: #5b8a3a; border-color: #5b8a3a; color: #fff; }
+[data-motyw="papier"] .oceny button.wl[data-v="C"] { background: #a86b12; border-color: #a86b12; color: #fff; }
+[data-motyw="papier"] .oceny button.wl[data-v="D"] { background: #b4432b; border-color: #b4432b; color: #fff; }
+[data-motyw="papier"] .suwak .wartosc-conf { background: var(--p-kafel); border-color: var(--p-ramka); border-radius: 8px; }
+[data-motyw="papier"] .lista-zasad .ikonka { border-radius: 6px; }
+[data-motyw="papier"] .lista-zasad .t { color: var(--plus); } [data-motyw="papier"] .lista-zasad .f { color: var(--minus); } [data-motyw="papier"] .lista-zasad .n { background: var(--p-wglebienie); }
+/* wnioski, zasady, setupy */
+[data-motyw="papier"] .wniosek { border-top-color: var(--p-ramka); }
+[data-motyw="papier"] .wniosek h3 { font: 600 1.12rem/1.35 var(--szeryf); letter-spacing: -.008em; }
+[data-motyw="papier"] .paski .os { background: var(--p-wglebienie); }
+[data-motyw="papier"] .paski .os::before { background: rgba(28, 35, 51, .3); }
+[data-motyw="papier"] .paski .os i.p { background: linear-gradient(90deg, rgba(30, 122, 76, .45), #1e7a4c); }
+[data-motyw="papier"] .paski .os i.m { background: linear-gradient(270deg, rgba(180, 67, 43, .45), #b4432b); }
+[data-motyw="papier"] .zasada h3 .nr { background: var(--akcent); color: #fff; border-radius: 6px; font-weight: 700; }
+[data-motyw="papier"] .zasada .liczby div { background: #fffdf8; border: 1px solid #ebe5d9; border-radius: 8px; }
+[data-motyw="papier"] .zasada .pasek-z { background: rgba(180, 67, 43, .3); }
+[data-motyw="papier"] .zasada .pasek-z i { background: var(--plus); }
+[data-motyw="papier"] table.tab th { border-bottom-color: var(--p-ramka2); }
+[data-motyw="papier"] table.tab td { border-bottom-color: #ece6da; }
+[data-motyw="papier"] table.tab tr:hover td { background: #fbf8f1; }
+@media (max-width: 760px) {
+  [data-motyw="papier"] table.tab.karty-mobilne tr { background: #fffdf8; border-color: var(--p-ramka); border-radius: 10px; }
+}
+@media (max-width: 600px) {
+  [data-motyw="papier"] body { font-size: 15px; }
+  [data-motyw="papier"] .okno-wn, [data-motyw="papier"] .okno-gora { border-radius: 0; }
+  [data-motyw="papier"] .hero-wynik .kwota { font-size: 2.05rem; }
+  [data-motyw="papier"] .tytul-strony { font-size: 1.65rem; }
+}
+
+/* ================= przełącznik motywu (oba motywy) ================= */
+html.bez-przejsc *, html.bez-przejsc *::before, html.bez-przejsc *::after { transition: none !important; }
+:root {
+  --ikona-slonce: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='4'/><path d='M12 2v2'/><path d='M12 20v2'/><path d='m4.93 4.93 1.41 1.41'/><path d='m17.66 17.66 1.41 1.41'/><path d='M2 12h2'/><path d='M20 12h2'/><path d='m6.34 17.66-1.41 1.41'/><path d='m19.07 4.93-1.41 1.41'/></svg>");
+  --ikona-ksiezyc: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z'/></svg>");
+}
+button.motyw-przelacz { padding: 7px 12px; gap: 7px; white-space: nowrap; }
+button.motyw-przelacz::before { content: ""; width: 15px; height: 15px; flex: none; background: currentColor; -webkit-mask: var(--ikona-slonce) center / contain no-repeat; mask: var(--ikona-slonce) center / contain no-repeat; }
+button.motyw-przelacz::after { content: "Papier"; }
+[data-motyw="papier"] button.motyw-przelacz::before { -webkit-mask-image: var(--ikona-ksiezyc); mask-image: var(--ikona-ksiezyc); }
+[data-motyw="papier"] button.motyw-przelacz::after { content: "Morski"; }
+html[data-w-centrum] button.motyw-przelacz { display: none; }   /* w Centrum i na telefonie przełącznik jest w Centrum / „Więcej” */
+@media (max-width: 600px) { html button.motyw-przelacz::after, html[data-motyw] button.motyw-przelacz::after { content: none; } button.motyw-przelacz { padding: 7px 9px; } }

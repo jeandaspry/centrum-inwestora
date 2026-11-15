@@ -118,3 +118,68 @@ button.link { display: block; margin: 20px auto 0; padding: 8px; border: 0; back
 .baner b { display: block; color: #fff; font-size: .86rem; margin-bottom: 2px; }
 @keyframes wjazd { from { transform: translateY(-12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .wczytywanie::after, .baner { animation: none; } }
+
+/* ---------------- „Więcej” → Wygląd: wybór motywu (oba motywy; zaznaczenie ustawia silnik/motyw.js) */
+.motyw-wybor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.motyw-wybor button { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 10px 10px 12px; border-radius: 14px; cursor: pointer;
+  background: rgba(4, 14, 12, .62); border: 1px solid rgba(255, 255, 255, .15); color: var(--tekst2); font: 500 .7rem/1.3 var(--mono); }
+.motyw-wybor button b { font: 700 .88rem/1.2 var(--sans); color: var(--tekst); margin-top: 8px; }
+.motyw-wybor button.wl { border-color: var(--akcent); box-shadow: 0 0 0 1px var(--akcent); }
+.motyw-wybor button:focus-visible { outline: 2px solid var(--akcent); outline-offset: 2px; }
+.probka { position: relative; display: block; width: 100%; height: 58px; border-radius: 9px; overflow: hidden; }
+.probka i { position: absolute; display: block; border-radius: 3px; }
+.probka i:nth-child(1) { left: 9px; top: 10px; width: 44%; height: 7px; }
+.probka i:nth-child(2) { left: 9px; right: 9px; bottom: 15px; height: 2px; transform: rotate(-5deg); transform-origin: left; }
+.probka i:nth-child(3) { right: 9px; top: 8px; width: 24%; height: 12px; border-radius: 4px; }
+.probka-morski { background: radial-gradient(80% 90% at 30% 0%, rgba(0, 255, 192, .4), transparent 70%), linear-gradient(180deg, #001b17, #000605); border: 1px solid rgba(255, 255, 255, .12); }
+.probka-morski i:nth-child(1) { background: rgba(236, 255, 250, .85); } .probka-morski i:nth-child(2) { background: #43f0c6; } .probka-morski i:nth-child(3) { background: linear-gradient(180deg, #5ef9d6, #0cb48b); }
+.probka-papier { background: #f6f3ec; border: 1px solid #e5dfd3; }
+.probka-papier i:nth-child(1) { background: #1c2333; } .probka-papier i:nth-child(2) { background: #b4432b; } .probka-papier i:nth-child(3) { background: #1f3a68; border-radius: 3px; }
+html.bez-przejsc *, html.bez-przejsc *::before, html.bez-przejsc *::after { transition: none !important; }
+
+/* ================= motyw „Papier” (jasny): <html data-motyw="papier"> =================
+ * Ciepła biel, granatowy tekst i przyciski, nagłówki szeryfowe (Fraunces), tekst IBM Plex Sans – jak papier.css stron w silnik/. */
+:root[data-motyw="papier"] {
+  color-scheme: light;
+  --tlo: #f6f3ec; --tekst: #1c2333; --tekst2: #4a5468; --tekst3: #646c7f;
+  --akcent: #1f3a68; --na-akcencie: #ffffff; --minus: #b4432b;
+  --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --sans: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --szeryf: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --szklo: #fffdf8;
+  --przycisk-glowny: linear-gradient(180deg, #27477e, #1c335c);
+}
+[data-motyw="papier"] body { font-family: var(--sans); letter-spacing: 0; background: var(--tlo); background-image: none; -webkit-font-smoothing: antialiased; }
+[data-motyw="papier"] body::before { display: none; }
+/* iPhone (aplikacja z ekranu początkowego) pisze godzinę i baterię na biało – pod nimi granatowy pas, żeby były czytelne */
+[data-motyw="papier"] body::after { content: ""; position: fixed; left: 0; right: 0; top: 0; height: var(--gora); background: #1c2333; z-index: 40; pointer-events: none; }
+[data-motyw="papier"] .ekran iframe { color-scheme: light; }
+[data-motyw="papier"] .wczytywanie::after { background: linear-gradient(90deg, transparent, #1f3a68, transparent); }
+[data-motyw="papier"] .zakladki { background: rgba(250, 247, 240, .94); border-top: 1px solid #e5dfd3; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+[data-motyw="papier"] .zakladki button { font: 600 .68rem/1.1 var(--sans); letter-spacing: 0; color: #6f778a; }
+[data-motyw="papier"] .zakladki button[aria-selected="true"] { color: var(--akcent); font-weight: 700; }
+[data-motyw="papier"] .zakladki button[aria-selected="true"]::after { content: ""; position: absolute; top: -6px; left: 28%; right: 28%; height: 2px; border-radius: 0 0 2px 2px; background: var(--akcent); }
+[data-motyw="papier"] .zakladki button[aria-selected="true"] .ik { filter: none; }
+[data-motyw="papier"] .zakladki .nowe { background: #93600e; box-shadow: 0 0 0 2px #faf7f0; }
+[data-motyw="papier"] .tytul { font: 600 1.85rem/1.1 var(--szeryf); letter-spacing: -.02em; color: #141a29; }
+[data-motyw="papier"] .karta { background: #fffdf8; border: 1px solid #e5dfd3; border-radius: 12px; box-shadow: 0 1px 2px rgba(28, 35, 51, .05), 0 8px 22px -14px rgba(28, 35, 51, .2); }
+[data-motyw="papier"] .karta h2 { font: 600 1.12rem/1.3 var(--szeryf); letter-spacing: -.01em; color: #141a29; }
+[data-motyw="papier"] .male { font-size: .84rem; }
+[data-motyw="papier"] .male b, [data-motyw="papier"] .tabela-danych b { color: #141a29; }
+[data-motyw="papier"] button.drugi, [data-motyw="papier"] button.glowny { font-family: var(--sans); font-size: .86rem; border-radius: 8px; }
+[data-motyw="papier"] button.drugi { color: #141a29; background: #fffdf8; border: 1px solid #d6cebd; }
+[data-motyw="papier"] button.glowny { color: #fff; border: 1px solid #19305a; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 6px 14px -8px rgba(31, 58, 104, .7); }
+[data-motyw="papier"] .karta-usun { border-color: rgba(180, 67, 43, .35); }
+[data-motyw="papier"] button.niebezpieczny { font-family: var(--sans); border-radius: 8px; color: #fff; background: #b4432b; border: 1px solid #9c3622; }
+[data-motyw="papier"] .usunieto { background: #f6f3ec; }
+[data-motyw="papier"] .usunieto h1 { font: 600 1.5rem/1.2 var(--szeryf); color: #141a29; }
+[data-motyw="papier"] .tabela-danych td { border-bottom-color: #ece6da; }
+[data-motyw="papier"] .bramka h1 { font: 600 1.7rem/1.15 var(--szeryf); letter-spacing: -.02em; color: #141a29; }
+[data-motyw="papier"] .bramka-ikona { box-shadow: 0 14px 30px -14px rgba(28, 35, 51, .45); }
+[data-motyw="papier"] .formularz label { font-size: .8rem; }
+[data-motyw="papier"] .formularz input { font-family: var(--sans); color: #141a29; background: #fffdf8; border: 1px solid #d6cebd; border-radius: 8px; }
+[data-motyw="papier"] button.link { font-family: var(--sans); }
+[data-motyw="papier"] .baner { background: #fffdf8; border: 1px solid #d6cebd; border-left: 3px solid var(--akcent); border-radius: 10px; box-shadow: 0 18px 40px -16px rgba(28, 35, 51, .4); }
+[data-motyw="papier"] .baner b { color: #141a29; }
+[data-motyw="papier"] .motyw-wybor button { background: #fffdf8; border-color: #d6cebd; border-radius: 10px; font-family: var(--sans); }
+[data-motyw="papier"] .motyw-wybor button b { font-family: var(--szeryf); font-weight: 600; font-size: .95rem; }

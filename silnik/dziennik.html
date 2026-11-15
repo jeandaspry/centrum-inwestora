@@ -6,6 +6,7 @@
 <!-- Wersja na telefon: zbudowana przez Centrum-Inwestora/narzedzia/zbuduj-telefon.ps1 z Laboratorium-Backtestow/aplikacja – nie edytuj ręcznie. -->
 <script src="../js/tylko-w-aplikacji.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="motyw.js"></script>
 <title>Dziennik tradera</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,6 +14,7 @@
 <link rel="stylesheet" href="asystent.css">
 <link rel="stylesheet" href="dziennik.css">
 <link rel="stylesheet" href="../telefon-strony.css">
+<link rel="stylesheet" href="papier.css">
 <script src="../js/serwer-w-telefonie.js"></script>
 <script src="centrum-most.js"></script>
 </head>
@@ -22,6 +24,7 @@
     <h1>Dziennik tradera</h1>
     <span class="rozpychacz"></span>
     <span class="stan" id="stan"><span class="kropka laduje"></span> wczytuję…</span>
+    <button type="button" class="motyw-przelacz" data-motyw-przelacz title="Zmień motyw: Morski (ciemny) ↔ Papier (jasny)" aria-label="Zmień motyw"></button>
     <a class="przycisk" href="asystent.html" data-centrum="asystent" title="Asystent rynku">Asystent →</a>
   </div>
   <nav class="nawigacja" id="zakladki">
@@ -68,7 +71,7 @@
     <section class="karta">
       <div class="sekcja-tytul"><h2>Wynik w czasie</h2><span class="b-male">łącznie i gdybyś trzymał się zasad 4–7</span></div>
       <div id="krzywa" class="wykres-lw krzywa"></div>
-      <div class="legenda"><span style="--k:#43f0c6">wszystkie trade'y</span><span style="--k:#7cc8ff">bez trade'ów łamiących zasady 4–7 (kiedy wchodzić)</span></div>
+      <div class="legenda"><span style="--k:var(--wyk-krzywa, #43f0c6)">wszystkie trade'y</span><span style="--k:var(--wyk-krzywa2, #7cc8ff)">bez trade'ów łamiących zasady 4–7 (kiedy wchodzić)</span></div>
       <p class="male" id="krzywaOpis" style="margin-top:10px"></p>
     </section>
     <section class="karta">

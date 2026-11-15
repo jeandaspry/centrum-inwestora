@@ -1,13 +1,13 @@
 // Service worker (jak w Bilansie): pliki aplikacji najpierw z sieci (zawsze najnowsza wersja), bez sieci z kopii w telefonie.
 // Dane rynkowe (Binance, Hyperliquid) nie przechodzą przez kopię – trzyma je „serwer w telefonie” w IndexedDB.
-const WERSJA = 'inwestor-0.5';
+const WERSJA = 'inwestor-0.6';
 const PLIKI = [
   './', 'index.html', 'styl.css', 'manifest.webmanifest', 'telefon-strony.css', 'panel.html', 'panel.css',
   'js/powloka.js', 'js/serwer-w-telefonie.js', 'js/panel-telefon.js', 'js/chmura.js', 'js/konfiguracja.js', 'js/dane-testowe.js', 'js/tylko-w-aplikacji.js',
   'silnik/asystent.html', 'silnik/asystent.css', 'silnik/asystent.js', 'silnik/asystent-silnik.js',
   'silnik/laboratorium.html', 'silnik/laboratorium.css', 'silnik/app.js',
   'silnik/lab.js', 'silnik/worker.js', 'silnik/centrum-most.js',
-  'silnik/dziennik.html', 'silnik/dziennik.css', 'silnik/dziennik.js', 'silnik/dziennik-silnik.js', 'silnik/asystent-dziennik.js', 'silnik/dziennik-lab.js', 'silnik/dziennik-wykresy.js', 'silnik/lightweight-charts.js',
+  'silnik/dziennik.html', 'silnik/dziennik.css', 'silnik/dziennik.js', 'silnik/dziennik-silnik.js', 'silnik/asystent-dziennik.js', 'silnik/dziennik-lab.js', 'silnik/dziennik-wykresy.js', 'silnik/lightweight-charts.js', 'silnik/motyw.js', 'silnik/papier.css',
   'ikony/ikona-180.png', 'ikony/ikona-192.png', 'ikony/ikona-512.png'
 ];
 // czcionki i biblioteki z CDN mają wersję w adresie – wystarczy raz je zapisać

@@ -21,6 +21,9 @@
   const pam = { czytaj(k, d) { try { const v = localStorage.getItem('asystent2-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     pisz(k, v) { try { localStorage.setItem('asystent2-' + k, JSON.stringify(v)); } catch (e) { /* tryb prywatny */ } } };
   const dLik = L => 1 / L - AS.MM;
+  // kolory z motywu (asystent.css / papier.css) – czytane przy rysowaniu, więc po zmianie motywu wystarczy przerysować
+  const kol = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const kolA = (n, a) => 'rgba(' + kol(n) + ', ' + a + ')';
 
   const S = { iw: pam.czytaj('interwal', '4h'), L: pam.czytaj('dzwignia', 10), kierunekPoz: null, hist: null, live: null, sygnaly: [],
     walidacja: null, walidGen: 0, workery: [], walidTimer: null };
@@ -56,7 +59,7 @@
     $('dzwOpis').innerHTML = `likwidacja przy ruchu ceny<br>o ok. ${fmt(dLik(S.L) * 100, 2)}%`;
     document.querySelectorAll('#szybkie button').forEach(b => b.classList.toggle('wl', +b.dataset.l === S.L));
     const proc = (S.L - 1) / 39 * 100;
-    $('dzwignia').style.background = `linear-gradient(90deg, #1fdaa9 0%, #ffd166 ${Math.max(30, proc * .7)}%, #ff6b6b 100%)`;
+    $('dzwignia').style.background = `linear-gradient(90deg, ${kol('--s-plus')} 0%, ${kol('--warning')} ${Math.max(30, proc * .7)}%, ${kol('--critical')} 100%)`;
   }
   function ustawL(L) {
     L = Math.min(40, Math.max(1, Math.round(L)));
@@ -297,7 +300,7 @@
     const pasek = (nazwa, X) => X.n ? `<div><div class="szansa-g"><b>${nazwa}</b><span>${X.n} przypadków · średnio <b class="${kl(X.srednia)}">${procZ(X.srednia)}</b> depozytu · 95%: ${procZ(X.dolna)} … ${procZ(X.srednia + 1.96 * X.se)}</span></div>
       <div class="pasek-szans" role="img" aria-label="${nazwa}: cel ${proc(X.cel)}, czas ${proc(X.czas)}, stop ${proc(X.stop)}, likwidacja ${proc(X.lik)}">
         <i class="c" style="width:${X.cel * 100}%" title="cel ${proc(X.cel)}"></i><i class="t" style="width:${X.czas * 100}%" title="czas minął ${proc(X.czas)}"></i><i class="s" style="width:${X.stop * 100}%" title="stop ${proc(X.stop)}"></i><i class="l" style="width:${X.lik * 100}%" title="likwidacja ${proc(X.lik)}"></i></div>
-      <div class="legenda" style="margin-top:4px"><span style="--k:#43f0c6">${proc(X.cel)}</span><span style="--k:rgba(255,255,255,.28)">${proc(X.czas)}</span><span style="--k:#ffd166">${proc(X.stop)}</span><span style="--k:#ff6b6b">${proc(X.lik)}</span></div></div>`
+      <div class="legenda" style="margin-top:4px"><span style="--k:var(--s-plus)">${proc(X.cel)}</span><span style="--k:rgba(var(--rgb-j),.28)">${proc(X.czas)}</span><span style="--k:var(--warning)">${proc(X.stop)}</span><span style="--k:var(--critical)">${proc(X.lik)}</span></div></div>`
       : `<div><div class="szansa-g"><b>${nazwa}</b><span>brak przypadków</span></div></div>`;
     $('szanse').innerHTML = pasek('Long', Lg) + pasek('Short', Sh);
     let uw = '';
@@ -321,8 +324,8 @@
     const zTp = N * dTp - oplaty, zSl = stopDziala ? -(N * dSl + oplaty) : NaN, zLik = -D;
     const fundDzien = Number.isFinite(L2.ostatniFunding) ? -kier * L2.ostatniFunding * 24 * N : NaN;
     const X = kier > 0 ? Lg : Sh;
-    const poz = [{ n: 'Cel', c: tp, k: '#43f0c6' }, { n: 'Wejście', c: cena, k: '#a7cdc4', przer: true }, { n: 'Likwidacja', c: likw, k: '#ff6b6b' }];
-    if (o.m > 0) poz.push({ n: stopDziala ? 'Stop' : 'Stop (za likw.)', c: sl, k: stopDziala ? '#ffd166' : 'rgba(255,209,102,.4)' });
+    const poz = [{ n: 'Cel', c: tp, k: kol('--s-plus') }, { n: 'Wejście', c: cena, k: kol('--tekst2'), przer: true }, { n: 'Likwidacja', c: likw, k: kol('--critical') }];
+    if (o.m > 0) poz.push({ n: stopDziala ? 'Stop' : 'Stop (za likw.)', c: sl, k: stopDziala ? kol('--warning') : kolA('--rgb-ostrz', .4) });
     tresc('poziomy', `
       <div class="drabinka-uklad">
         <div class="drabinka">${drabinka(poz, cena, kier)}</div>
@@ -349,8 +352,8 @@
     const Y = c => gora + (mx - c) / (mx - mn) * (H - gora - dol);
     const cel = poz.find(p => p.n === 'Cel'), lik = poz.find(p => p.n === 'Likwidacja');
     let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Poziomy cen: cel, wejście, stop i likwidacja">`;
-    s += `<rect x="0" y="${Math.min(Y(cel.c), Y(cena))}" width="${W}" height="${Math.abs(Y(cel.c) - Y(cena))}" fill="rgba(67,240,198,.08)"/>`;
-    s += `<rect x="0" y="${Math.min(Y(lik.c), Y(cena))}" width="${W}" height="${Math.abs(Y(lik.c) - Y(cena))}" fill="rgba(255,107,107,.08)"/>`;
+    s += `<rect x="0" y="${Math.min(Y(cel.c), Y(cena))}" width="${W}" height="${Math.abs(Y(cel.c) - Y(cena))}" fill="${kolA(kol('--rgb-plus') ? '--rgb-plus' : '--rgb-akcent', .08)}"/>`;
+    s += `<rect x="0" y="${Math.min(Y(lik.c), Y(cena))}" width="${W}" height="${Math.abs(Y(lik.c) - Y(cena))}" fill="${kolA('--rgb-minus', .08)}"/>`;
     // etykiety bez nachodzenia na siebie
     // etykiety nad liniami; gdy linie są blisko siebie, etykiety rozsuwamy (min. 17 px) i łączymy kreską z linią
     const etyk = poz.filter(p => Number.isFinite(p.c)).map(p => ({ p, y: Y(p.c) })).sort((a, b) => a.y - b.y);
@@ -358,7 +361,7 @@
     for (const e of etyk) {
       s += `<line x1="0" x2="${W}" y1="${e.y}" y2="${e.y}" stroke="${e.p.k}" stroke-width="${e.p.przer ? 1.4 : 2}" ${e.p.przer ? 'stroke-dasharray="4 4"' : ''}/>`;
       if (e.yt > e.y - 5 + 0.5) s += `<line x1="${W - 92}" x2="${W - 92}" y1="${e.y}" y2="${e.yt - 10}" stroke="${e.p.k}" stroke-width="1" opacity=".6"/>`;
-      s += `<text x="2" y="${e.yt}" fill="${e.p.k}">${e.p.n}</text><text x="${W - 2}" y="${e.yt}" fill="#ecfffa" text-anchor="end">${cena$(e.p.c)}</text>`;
+      s += `<text x="2" y="${e.yt}" fill="${e.p.k}">${e.p.n}</text><text x="${W - 2}" y="${e.yt}" fill="${kol('--tekst')}" text-anchor="end">${cena$(e.p.c)}</text>`;
     }
     return s + '</svg>';
   }
@@ -438,15 +441,15 @@
     const K = 40, kosze = new Array(K).fill(0);
     for (const v of wartosci) kosze[Math.min(K - 1, Math.floor((v - mn) / (mx - mn) * K))]++;
     const maxK = Math.max(1, ...kosze), bw = (w - L - R) / K;
-    kosze.forEach((k, i) => { const hh = (h - T - B) * k / maxK; x.fillStyle = 'rgba(167,205,196,.35)'; x.beginPath(); x.roundRect ? x.roundRect(L + i * bw + 1, h - B - hh, bw - 2, hh, 2) : x.rect(L + i * bw + 1, h - B - hh, bw - 2, hh); x.fill(); });
-    x.fillStyle = '#7fa79e'; x.textAlign = 'center';
+    kosze.forEach((k, i) => { const hh = (h - T - B) * k / maxK; x.fillStyle = kol('--as-slupki'); x.beginPath(); x.roundRect ? x.roundRect(L + i * bw + 1, h - B - hh, bw - 2, hh, 2) : x.rect(L + i * bw + 1, h - B - hh, bw - 2, hh); x.fill(); });
+    x.fillStyle = kol('--tekst3'); x.textAlign = 'center';
     for (let k = 0; k <= 4; k++) { const v = mn + (mx - mn) * k / 4; x.fillText(usd(v, 0), L + 30 + (w - L - R - 60) * k / 4, h - 6); }
     const px = L + (w - L - R) * (prawdziwy - mn) / (mx - mn);
-    x.strokeStyle = '#43f0c6'; x.lineWidth = 2; x.shadowColor = 'rgba(67,240,198,.8)'; x.shadowBlur = 8;
+    x.strokeStyle = kol('--akcent'); x.lineWidth = 2; x.shadowColor = kolA('--rgb-akcent', .8); x.shadowBlur = kol('--as-poswiata') === '0' ? 0 : 8;
     x.beginPath(); x.moveTo(px, T - 6); x.lineTo(px, h - B); x.stroke(); x.shadowBlur = 0;
-    x.fillStyle = '#43f0c6'; x.textAlign = px > w / 2 ? 'right' : 'left';
+    x.fillStyle = kol('--akcent'); x.textAlign = px > w / 2 ? 'right' : 'left';
     x.fillText('prawdziwe dane: ' + usd(prawdziwy, 0), px + (px > w / 2 ? -6 : 6), T);
-    x.fillStyle = '#7fa79e'; x.textAlign = 'left'; x.fillText('wynik sygnałów na przetasowanych danych', L, 11);
+    x.fillStyle = kol('--tekst3'); x.textAlign = 'left'; x.fillText('wynik sygnałów na przetasowanych danych', L, 11);
   }
 
   // ---------- dziennik sygnałów ----------
@@ -571,4 +574,6 @@
   }
   start();
   window.addEventListener('resize', () => { if (S.walidacja && S.hist) renderWiarygodnosc(); });
+  // zmiana motywu: przerysuj wszystko (kolory w SVG i na płótnach są brane z motywu przy rysowaniu)
+  document.addEventListener('motyw', () => { try { renderWszystko(); if (S.walidacja && S.hist) renderWiarygodnosc(); } catch (e) { /* jeszcze bez danych */ } });
 })();

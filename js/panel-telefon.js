@@ -118,7 +118,7 @@
       <div class="kontrola">${z0.spina ? '✔ Kontrola w panelu: suma wyników kont = wartość − wpłaty netto.' : '<b class="minus">Panel zgłasza, że wynik się nie spina – nie polegaj na tej liczbie.</b>'}</div>
       <div class="cel">
         <div class="pierscien" role="img" aria-label="Postęp celu ${proc(c.postep, 1)}">
-          <svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="10"/>
+          <svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="${R}" fill="none" style="stroke:var(--pierscien-tlo, rgba(255,255,255,.1))" stroke-width="10"/>
             <circle cx="56" cy="56" r="${R}" fill="none" stroke-width="10" stroke-linecap="round" stroke="${c.wynik < 0 ? 'var(--s-minus)' : 'var(--s-plus)'}" stroke-dasharray="${(c.postepPierscien * obw).toFixed(2)} ${obw.toFixed(2)}"/></svg>
           <div class="srodek"><div class="proc">${proc(c.postep, Math.abs(c.postep) < 0.1 ? 1 : 0)}</div><div class="pod">celu ${usd(c.kwotaCelu, false, 0)}</div></div>
         </div>

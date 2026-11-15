@@ -22,16 +22,43 @@
   }
   DZW.dostepne = () => !!LW;
 
+  // kolory z motywu: papier.css definiuje zmienne --wyk-*; bez nich (motyw morski) zostają dotychczasowe barwy
+  const MORSKI = {
+    tekst: 'rgba(236,255,250,.6)', czcionka: '"JetBrains Mono", ui-monospace, monospace', siatkaPion: 'rgba(255,255,255,.035)', siatka: 'rgba(255,255,255,.05)', ramka: 'rgba(255,255,255,.1)',
+    celownik: 'rgba(67,240,198,.45)', celownikTlo: '#0b9e7b', celownikMini: 'rgba(255,255,255,.3)',
+    wzrost: '#43f0c6', spadek: '#ff7a7a', knotWzrost: 'rgba(67,240,198,.8)', knotSpadek: 'rgba(255,122,122,.8)', wolWzrost: 'rgba(67,240,198,.28)', wolSpadek: 'rgba(255,122,122,.28)',
+    wejscie: '#ffffff', wyjscie: '#ffd166', sl: '#ff7a7a', tp: '#43f0c6', plan: '#7cc8ff', kup: '#5ef9d6', sprzedaj: '#ff9d9d',
+    krzywa: '#43f0c6', krzywaGora: 'rgba(67,240,198,.32)', krzywaDol: 'rgba(67,240,198,0)', krzywa2: '#7cc8ff', zero: 'rgba(255,255,255,.35)', zeroMini: 'rgba(255,255,255,.3)',
+    plus: '#43f0c6', plusGora: 'rgba(67,240,198,.30)', plusDol: 'rgba(67,240,198,0)', minus: '#ff8a8a', minusGora: 'rgba(255,107,107,.26)', minusDol: 'rgba(255,107,107,0)'
+  };
+  const kebab = (s) => s.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+  function paleta() {
+    const cs = getComputedStyle(document.documentElement), p = {};
+    for (const k in MORSKI) p[k] = cs.getPropertyValue('--wyk-' + kebab(k)).trim() || MORSKI[k];
+    return p;
+  }
+  DZW.paleta = paleta;
+  // po zmianie motywu każdy żywy wykres przemalowuje się sam (dane zostają, nic nie jest pobierane ponownie)
+  const przemaluj = new Set();
+  document.addEventListener('motyw', () => przemaluj.forEach((f) => { try { f(paleta()); } catch (e) { /* wykres usunięty */ } }));
+  const kolorySiatki = (p) => ({
+    layout: { textColor: p.tekst, fontFamily: p.czcionka },
+    grid: { vertLines: { color: p.siatkaPion }, horzLines: { color: p.siatka } },
+    rightPriceScale: { borderColor: p.ramka }, timeScale: { borderColor: p.ramka },
+    crosshair: { vertLine: { color: p.celownik, labelBackgroundColor: p.celownikTlo }, horzLine: { color: p.celownik, labelBackgroundColor: p.celownikTlo } }
+  });
+
   function wykres(el, extra) {
+    const p = paleta();
     return LW.createChart(el, Object.assign({
       autoSize: true,
-      layout: { background: { type: 'solid', color: 'transparent' }, textColor: 'rgba(236,255,250,.6)', fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontSize: 11 },
-      grid: { vertLines: { color: 'rgba(255,255,255,.035)' }, horzLines: { color: 'rgba(255,255,255,.05)' } },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,.1)' },
-      timeScale: { borderColor: 'rgba(255,255,255,.1)', timeVisible: true, secondsVisible: false, tickMarkFormatter: fmtOs, rightOffset: 4 },
+      layout: { background: { type: 'solid', color: 'transparent' }, textColor: p.tekst, fontFamily: p.czcionka, fontSize: 11 },
+      grid: { vertLines: { color: p.siatkaPion }, horzLines: { color: p.siatka } },
+      rightPriceScale: { borderColor: p.ramka },
+      timeScale: { borderColor: p.ramka, timeVisible: true, secondsVisible: false, tickMarkFormatter: fmtOs, rightOffset: 4 },
       crosshair: { mode: LW.CrosshairMode.Normal,
-        vertLine: { color: 'rgba(67,240,198,.45)', labelBackgroundColor: '#0b9e7b', width: 1 },
-        horzLine: { color: 'rgba(67,240,198,.45)', labelBackgroundColor: '#0b9e7b', width: 1 } },
+        vertLine: { color: p.celownik, labelBackgroundColor: p.celownikTlo, width: 1 },
+        horzLine: { color: p.celownik, labelBackgroundColor: p.celownikTlo, width: 1 } },
       localization: { locale: 'pl-PL', timeFormatter: fmtCzas, priceFormatter: fmtCena },
       kineticScroll: { touch: true, mouse: false }
     }, extra || {}));
@@ -45,17 +72,26 @@
     el.innerHTML = `<div class="w-pasek"><span class="w-iw">${Object.keys(MS).map(k => `<button type="button" data-iw="${k}">${k}</button>`).join('')}</span><span class="w-legenda"></span><button type="button" class="w-dopasuj" title="Pokaż cały trade">⤢</button></div><div class="w-plotno"></div><div class="w-stan b-male"></div>`;
     const plotno = el.querySelector('.w-plotno'), legenda = el.querySelector('.w-legenda'), stan = el.querySelector('.w-stan');
     const ch = wykres(plotno);
-    const swiece = ch.addCandlestickSeries({ upColor: '#43f0c6', downColor: '#ff7a7a', borderUpColor: '#43f0c6', borderDownColor: '#ff7a7a', wickUpColor: 'rgba(67,240,198,.8)', wickDownColor: 'rgba(255,122,122,.8)', priceLineVisible: false });
+    let p = paleta();
+    const koloryswiec = (p) => ({ upColor: p.wzrost, downColor: p.spadek, borderUpColor: p.wzrost, borderDownColor: p.spadek, wickUpColor: p.knotWzrost, wickDownColor: p.knotSpadek });
+    const swiece = ch.addCandlestickSeries(Object.assign(koloryswiec(p), { priceLineVisible: false }));
     const wol = ch.addHistogramSeries({ priceScaleId: 'wol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
     ch.priceScale('wol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 }, visible: false });
-    const linie = [];
-    const liniaCeny = (cena, kolor, tytul, styl) => { if (!(cena > 0)) return; linie.push(swiece.createPriceLine({ price: cena, color: kolor, lineWidth: 1, lineStyle: styl, axisLabelVisible: true, title: tytul })); };
-    liniaCeny(t.wejscie, '#ffffff', 'wejście', LW.LineStyle.Solid);
-    if (t.wyjscie) liniaCeny(t.wyjscie, '#ffd166', 'wyjście', LW.LineStyle.Solid);
-    liniaCeny(t.sl, '#ff7a7a', 'SL', LW.LineStyle.Dashed);
-    liniaCeny(t.tp, '#43f0c6', 'TP', LW.LineStyle.Dashed);
-    liniaCeny(Number(t.wpis && t.wpis.planWejscie), '#7cc8ff', 'plan', LW.LineStyle.Dotted);
+    const linie = [];   // [linia, klucz koloru]
+    const liniaCeny = (cena, klucz, tytul, styl) => { if (!(cena > 0)) return; linie.push([swiece.createPriceLine({ price: cena, color: p[klucz], lineWidth: 1, lineStyle: styl, axisLabelVisible: true, title: tytul }), klucz]); };
+    liniaCeny(t.wejscie, 'wejscie', 'wejście', LW.LineStyle.Solid);
+    if (t.wyjscie) liniaCeny(t.wyjscie, 'wyjscie', 'wyjście', LW.LineStyle.Solid);
+    liniaCeny(t.sl, 'sl', 'SL', LW.LineStyle.Dashed);
+    liniaCeny(t.tp, 'tp', 'TP', LW.LineStyle.Dashed);
+    liniaCeny(Number(t.wpis && t.wpis.planWejscie), 'plan', 'plan', LW.LineStyle.Dotted);
+    const kolorWol = (k) => (k.close >= k.open ? p.wolWzrost : p.wolSpadek);
     let dane = [], timer = null, zniszczony = false;
+    const malarz = (nowa) => {
+      p = nowa; ch.applyOptions(kolorySiatki(p)); swiece.applyOptions(koloryswiec(p));
+      linie.forEach(([l, k]) => l.applyOptions({ color: p[k] }));
+      if (dane.length) { wol.setData(dane.map(k => ({ time: k.time, value: k.v || 0, color: kolorWol(k) }))); znaczniki(); }
+    };
+    przemaluj.add(malarz);
 
     const dopasuj = () => {
       const ms = MS[iw], pad = Math.max(dl * 0.6, 24 * ms);
@@ -65,12 +101,13 @@
       const ms = MS[iw], m = new Map();
       for (const f of t.wypelnienia || []) {
         const czas = Math.floor(f.t / ms) * ms / 1000, kup = f.side === 'B', k = czas + (kup ? 'B' : 'A');
-        const x = m.get(k) || { time: czas, position: kup ? 'belowBar' : 'aboveBar', color: kup ? '#5ef9d6' : '#ff9d9d', shape: kup ? 'arrowUp' : 'arrowDown', ile: 0, sz: 0 };
+        const x = m.get(k) || { time: czas, position: kup ? 'belowBar' : 'aboveBar', color: kup ? p.kup : p.sprzedaj, shape: kup ? 'arrowUp' : 'arrowDown', ile: 0, sz: 0 };
         x.ile++; x.sz += f.sz; m.set(k, x);
       }
       const lista = [...m.values()].map(x => ({ time: x.time, position: x.position, color: x.color, shape: x.shape, text: (x.position === 'belowBar' ? 'kupno ' : 'sprzedaż ') + nf(4).format(x.sz) }));
-      lista.push({ time: Math.floor(otw / ms) * ms / 1000, position: 'inBar', color: 'rgba(255,255,255,0)', shape: 'circle', size: 0, text: '' });
-      swiece.setMarkers(lista.filter(x => x.text).sort((a, b) => a.time - b.time));
+      // tylko w czasie istniejących świec (inaczej biblioteka zgłasza błąd, np. przy świeżo otwartym trade'zie)
+      const sa = new Set(dane.map(d => d.time));
+      swiece.setMarkers(lista.filter(x => x.text && sa.has(x.time)).sort((a, b) => a.time - b.time));
     }
     async function zaladuj(pierwszy) {
       const ms = MS[iw];
@@ -83,7 +120,7 @@
         if (zniszczony) return;
         dane = sw.map(k => ({ time: k.t / 1000, open: k.o, high: k.h, low: k.l, close: k.c, v: k.v }));
         swiece.setData(dane.map(({ v, ...x }) => x));
-        wol.setData(dane.map(k => ({ time: k.time, value: k.v || 0, color: k.close >= k.open ? 'rgba(67,240,198,.28)' : 'rgba(255,122,122,.28)' })));
+        wol.setData(dane.map(k => ({ time: k.time, value: k.v || 0, color: kolorWol(k) })));
         znaczniki(); if (pierwszy !== false) dopasuj();
         stan.textContent = `${dane.length} świec ${iw} z Hyperliquid · przeciągnij, żeby przesunąć · kółko myszy albo dwa palce, żeby przybliżyć`;
         el.querySelectorAll('[data-iw]').forEach(b => b.classList.toggle('wl', b.dataset.iw === iw));
@@ -106,14 +143,14 @@
         for (const k of sw) {
           const x = { time: k.t / 1000, open: k.o, high: k.h, low: k.l, close: k.c };
           if (x.time < dane[dane.length - 1].time) continue;
-          swiece.update(x); wol.update({ time: x.time, value: k.v || 0, color: x.close >= x.open ? 'rgba(67,240,198,.28)' : 'rgba(255,122,122,.28)' });
+          swiece.update(x); wol.update({ time: x.time, value: k.v || 0, color: kolorWol(x) });
           if (x.time === dane[dane.length - 1].time) dane[dane.length - 1] = Object.assign(x, { v: k.v }); else dane.push(Object.assign(x, { v: k.v }));
         }
         stan.textContent = `na żywo · ${dane.length} świec ${iw} · odświeżane co 15 s`;
       } catch (e) { /* spróbujemy za 15 s */ }
     }, 15000);
     zaladuj();
-    return { usun() { zniszczony = true; clearInterval(timer); try { ch.remove(); } catch (e) { } } };
+    return { usun() { zniszczony = true; clearInterval(timer); przemaluj.delete(malarz); try { ch.remove(); } catch (e) { } } };
   };
 
   // ------------------------------------------------------------------ wynik w czasie
@@ -121,17 +158,25 @@
   DZW.krzywa = function (el) {
     el.innerHTML = '<div class="w-pasek"><span class="w-legenda"></span><button type="button" class="w-dopasuj" title="Pokaż całość">⤢</button></div><div class="w-plotno"></div>';
     const plotno = el.querySelector('.w-plotno'), legenda = el.querySelector('.w-legenda');
-    const ch = wykres(plotno, { rightPriceScale: { borderColor: 'rgba(255,255,255,.1)', scaleMargins: { top: 0.12, bottom: 0.08 } }, localization: { locale: 'pl-PL', timeFormatter: fmtCzas, priceFormatter: (p) => fmtUsd(p) } });
-    const a = ch.addAreaSeries({ lineColor: '#43f0c6', topColor: 'rgba(67,240,198,.32)', bottomColor: 'rgba(67,240,198,0)', lineWidth: 2, priceLineVisible: false, lastValueVisible: true });
-    const b = ch.addLineSeries({ color: '#7cc8ff', lineWidth: 2, priceLineVisible: false, lastValueVisible: true });
-    a.createPriceLine({ price: 0, color: 'rgba(255,255,255,.35)', lineWidth: 1, lineStyle: LW.LineStyle.Dashed, axisLabelVisible: false, title: '' });
-    let pkt = [];
+    let kol = paleta();
+    const ch = wykres(plotno, { rightPriceScale: { borderColor: kol.ramka, scaleMargins: { top: 0.12, bottom: 0.08 } }, localization: { locale: 'pl-PL', timeFormatter: fmtCzas, priceFormatter: (p) => fmtUsd(p) } });
+    const koloryA = (k) => ({ lineColor: k.krzywa, topColor: k.krzywaGora, bottomColor: k.krzywaDol });
+    ch.timeScale().applyOptions({ lockVisibleTimeRangeOnResize: true });   // po zmianie szerokości okna cała krzywa zostaje w kadrze
+    const a = ch.addAreaSeries(Object.assign(koloryA(kol), { lineWidth: 2, priceLineVisible: false, lastValueVisible: true }));
+    const b = ch.addLineSeries({ color: kol.krzywa2, lineWidth: 2, priceLineVisible: false, lastValueVisible: true });
+    const zero = a.createPriceLine({ price: 0, color: kol.zero, lineWidth: 1, lineStyle: LW.LineStyle.Dashed, axisLabelVisible: false, title: '' });
+    let pkt = [], ostI = -1;
     const legendaDla = (i) => {
-      const p = pkt[i]; if (!p) { legenda.textContent = ''; return; }
-      legenda.innerHTML = `<span>${fmtCzas(p.time)}</span> wszystkie <b class="${p.a >= 0 ? 'plus' : 'minus'}">${fmtUsd(p.a)}</b> · zasady 4–7 <b style="color:#7cc8ff">${fmtUsd(p.b)}</b>${p.opis ? ` · <span>${p.opis}</span> <b class="${p.netto >= 0 ? 'plus' : 'minus'}">${fmtUsd(p.netto)}</b>` : ''}`;
+      ostI = i; const p = pkt[i]; if (!p) { legenda.textContent = ''; return; }
+      legenda.innerHTML = `<span>${fmtCzas(p.time)}</span> wszystkie <b class="${p.a >= 0 ? 'plus' : 'minus'}">${fmtUsd(p.a)}</b> · zasady 4–7 <b style="color:${kol.krzywa2}">${fmtUsd(p.b)}</b>${p.opis ? ` · <span>${p.opis}</span> <b class="${p.netto >= 0 ? 'plus' : 'minus'}">${fmtUsd(p.netto)}</b>` : ''}`;
     };
     ch.subscribeCrosshairMove((p) => { if (!p || !p.time) { legendaDla(pkt.length - 1); return; } const i = pkt.findIndex(x => x.time === p.time); legendaDla(i >= 0 ? i : pkt.length - 1); });
     el.querySelector('.w-dopasuj').addEventListener('click', () => ch.timeScale().fitContent());
+    const malarz = (nowa) => {
+      kol = nowa; ch.applyOptions(kolorySiatki(kol)); a.applyOptions(koloryA(kol)); b.applyOptions({ color: kol.krzywa2 }); zero.applyOptions({ color: kol.zero });
+      legendaDla(ostI);
+    };
+    przemaluj.add(malarz);
     return {
       ustaw(punkty) {
         let ost = 0; pkt = punkty.map(p => { let time = Math.floor(p.t / 1000); if (time <= ost) time = ost + 1; ost = time; return Object.assign({}, p, { time }); });
@@ -139,30 +184,37 @@
         b.setData(pkt.map(p => ({ time: p.time, value: p.b })));
         ch.timeScale().fitContent(); legendaDla(pkt.length - 1);
       },
-      usun() { try { ch.remove(); } catch (e) { } }
+      usun() { przemaluj.delete(malarz); try { ch.remove(); } catch (e) { } }
     };
   };
 
   // ------------------------------------------------------------------ mały wykres w przeglądzie
   DZW.mini = function (el) {
     // logo TradingView tylko na dużych wykresach – tu podpis jest w stopce strony (wymóg licencji: atrybucja)
-    const ch = wykres(el, { layout: { background: { type: 'solid', color: 'transparent' }, textColor: 'rgba(236,255,250,.6)', fontFamily: '"JetBrains Mono", ui-monospace, monospace', fontSize: 11, attributionLogo: false },
-      rightPriceScale: { visible: false }, leftPriceScale: { visible: false }, timeScale: { visible: false, borderVisible: false },
+    let kol = paleta(), naPlusie = true;
+    const ch = wykres(el, { layout: { background: { type: 'solid', color: 'transparent' }, textColor: kol.tekst, fontFamily: kol.czcionka, fontSize: 11, attributionLogo: false },
+      rightPriceScale: { visible: false }, leftPriceScale: { visible: false }, timeScale: { visible: false, borderVisible: false, lockVisibleTimeRangeOnResize: true },
       grid: { vertLines: { visible: false }, horzLines: { visible: false } }, handleScroll: false, handleScale: false,
-      crosshair: { mode: LW.CrosshairMode.Magnet, horzLine: { visible: false, labelVisible: false }, vertLine: { color: 'rgba(255,255,255,.3)', labelVisible: false, width: 1 } },
+      crosshair: { mode: LW.CrosshairMode.Magnet, horzLine: { visible: false, labelVisible: false }, vertLine: { color: kol.celownikMini, labelVisible: false, width: 1 } },
       localization: { locale: 'pl-PL', timeFormatter: fmtCzas, priceFormatter: (p) => fmtUsd(p) } });
     const s = ch.addAreaSeries({ lineWidth: 2, priceLineVisible: false, lastValueVisible: false, crosshairMarkerRadius: 4 });
-    s.createPriceLine({ price: 0, color: 'rgba(255,255,255,.3)', lineWidth: 1, lineStyle: LW.LineStyle.Dashed, axisLabelVisible: false, title: '' });
+    const zero = s.createPriceLine({ price: 0, color: kol.zeroMini, lineWidth: 1, lineStyle: LW.LineStyle.Dashed, axisLabelVisible: false, title: '' });
     const podpis = document.createElement('div'); podpis.className = 'w-mini-podpis'; el.appendChild(podpis);
     let pkt = [];
     ch.subscribeCrosshairMove((p) => { const x = p && p.time ? pkt.find(q => q.time === p.time) : null; podpis.innerHTML = x ? `${fmtCzas(x.time)} · <b>${fmtUsd(x.value)}</b>` : ''; });
+    const koloryS = () => (naPlusie ? { lineColor: kol.plus, topColor: kol.plusGora, bottomColor: kol.plusDol } : { lineColor: kol.minus, topColor: kol.minusGora, bottomColor: kol.minusDol });
+    const malarz = (nowa) => {
+      kol = nowa; ch.applyOptions({ layout: { textColor: kol.tekst, fontFamily: kol.czcionka }, crosshair: { vertLine: { color: kol.celownikMini } } });
+      zero.applyOptions({ color: kol.zeroMini }); s.applyOptions(koloryS());
+    };
+    przemaluj.add(malarz);
     return {
       ustaw(punkty, plus) {
         let ost = 0; pkt = punkty.map(p => { let time = Math.floor(p.t / 1000); if (time <= ost) time = ost + 1; ost = time; return { time, value: p.v }; });
-        s.applyOptions(plus ? { lineColor: '#43f0c6', topColor: 'rgba(67,240,198,.30)', bottomColor: 'rgba(67,240,198,0)' } : { lineColor: '#ff8a8a', topColor: 'rgba(255,107,107,.26)', bottomColor: 'rgba(255,107,107,0)' });
+        naPlusie = !!plus; s.applyOptions(koloryS());
         s.setData(pkt); ch.timeScale().fitContent();
       },
-      usun() { try { ch.remove(); } catch (e) { } }
+      usun() { przemaluj.delete(malarz); try { ch.remove(); } catch (e) { } }
     };
   };
 
