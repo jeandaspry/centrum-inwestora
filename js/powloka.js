@@ -4,7 +4,7 @@
  * więc przełączanie kart nie liczy wszystkiego od nowa. */
 (function () {
   'use strict';
-  const WERSJA = '0.7';
+  const WERSJA = '0.7.1';
   window.INWESTOR_POWLOKA = true;
   const $ = id => document.getElementById(id);
   const KARTY = ['panel', 'dziennik', 'asystent', 'laboratorium', 'wiecej'];

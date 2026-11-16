@@ -52,7 +52,42 @@
           <span class="p">${a.doZera > 0.005 ? 'do zera ' + doZeraTxt(a) : 'na plusie'}</span></button>`; }).join('')}</div>
       ${przelacznikWalut()}</section>`;
   }
-  const przelacznikWalut = () => `<span class="przelacznik pl-waluty" role="group" aria-label="Waluta">${WAL.map(x => `<button type="button" data-pl-waluta="${x}" class="${x === st.waluta ? 'wl' : ''}" aria-pressed="${x === st.waluta}">${x}</button>`).join('')}</span>`;
+  // waluta tylko przelicza kwoty – zawsze widać wszystkie konta (rachunek w innej walucie jest przeliczony, nie ukryty)
+  const przelacznikWalut = () => `<span class="pl-wal"><span class="b-male">kwoty w</span><span class="przelacznik pl-waluty" role="group" aria-label="Pokaż kwoty w walucie">${WAL.map(x => `<button type="button" data-pl-waluta="${x}" class="${x === st.waluta ? 'wl' : ''}" aria-pressed="${x === st.waluta}">${x}</button>`).join('')}</span></span>`;
+
+  // ---------- rachunki i salda (np. XTB: rachunek USD, rachunek PLN, IKE) ----------
+  function przelicznik(m, w) { const K = m.platformy.kursy || {}; return w === 'USD' ? 1 : w === 'PLN' ? (K.USDPLN || m.kursUSDPLN || null) : (K.EURUSD ? 1 / K.EURUSD : null); }
+  // Hyperliquid na żywo: zmiana wyniku otwartych pozycji dochodzi do salda USDC tego rachunku
+  function rachunekZywy(rc, m, live) {
+    if (!live || !live.d || rc.id !== live.konto) return rc;
+    const g = zZywym({ kontaIds: [rc.id], w: rc.w, seria: [] }, m, live);
+    const salda = rc.salda.map(x => x.r === 'reszta' ? Object.assign({}, x, { v: x.v.map((v, j) => ok(v) && przelicznik(m, WAL[j]) ? v + live.d * przelicznik(m, WAL[j]) : v), nat: ok(x.nat) ? x.nat + live.d * (przelicznik(m, rc.waluta) || 0) : x.nat, ilosc: ok(x.ilosc) && x.jedn === 'USDC' ? x.ilosc + live.d : x.ilosc }) : x);
+    return Object.assign({}, rc, { w: g.w, salda, zywyHL: true });
+  }
+  function rachunek(rc0, m, live, w, iw) {
+    const rc = rachunekZywy(rc0, m, live), a = rc.w[w], wal = rc.waluta, inna = wal !== w && rc.w[wal], przel = przelicznik(m, w);
+    const wynik = (x) => (!ok(x.wu) ? null : w === wal && ok(x.wn) ? x.wn : przel ? x.wu * przel : null);
+    const ile = (x) => (ok(x.ilosc) ? new Intl.NumberFormat('pl-PL', { maximumFractionDigits: Math.abs(x.ilosc) >= 1000 ? 2 : Math.abs(x.ilosc) >= 1 ? 4 : 8 }).format(x.ilosc) + (x.jedn && x.jedn !== x.nazwa ? ' ' + x.jedn : '') : '');
+    const cena = (x) => (x.c ? new Intl.NumberFormat('pl-PL', { maximumFractionDigits: x.c >= 100 ? 2 : x.c >= 1 ? 3 : 6 }).format(x.c) + ' ' + (x.cw || '') : '');
+    return `<div class="pl-rach">
+      <div class="g"><b>${E(rc.nazwa)}</b><b class="wart">${kw(a.wartosc, w)}</b></div>
+      <div class="s">waluta rachunku ${E(wal)} · ${E(rc.zrodlo)}${rc.zywyHL ? ' · Hyperliquid na żywo' : ''}</div>
+      <div class="s">wpłacone netto ${kw(a.netto, w)} · wynik <span class="${kl(a.wynik)}">${kw(a.wynik, w, { znak: true })}</span> · ${a.doZera > 0.005 ? 'do zera ' + kw(a.doZera, w) + ' (' + doZeraTxt(a) + ')' : 'na plusie'}</div>
+      ${inna ? `<div class="s"><b>w walucie rachunku (${E(wal)}):</b> masz ${kw(rc.w[wal].wartosc, wal)}, wpłacone netto ${kw(rc.w[wal].netto, wal)}, wynik <span class="${kl(rc.w[wal].wynik)}">${kw(rc.w[wal].wynik, wal, { znak: true })}</span></div>` : ''}
+      ${rc.salda.map(x => { const wy = wynik(x), op = [x.opis, ile(x), cena(x)].filter(Boolean).join(' · ');
+        return `<div class="pl-saldo${x.r === 'drobne' || x.r === 'airdrop' ? ' poza' : ''}"><span class="n">${E(x.nazwa)}${op ? `<small>${E(op)}</small>` : ''}${x.bc ? '<small class="minus">brak ceny – liczone 0</small>' : ''}</span>
+          <span class="v"><b>${kw(x.v[iw], w)}</b>${inna ? `<small>${kw(x.nat, wal)}</small>` : ''}${wy !== null ? `<small class="${kl(wy)}">${kw(wy, w, { znak: true })}</small>` : ''}</span></div>`; }).join('')}
+      ${rc.pozycje && rc.pozycje.length ? `<div class="s">Otwarte pozycje (wynik jest już w saldzie): ${rc.pozycje.map(p => E(p.nazwa) + ' ' + kw(przel && ok(p.wu) ? p.wu * przel : null, w, { znak: true })).join(', ')}</div>` : ''}
+    </div>`;
+  }
+  function sekcjaRachunkow(g, m, live, w, iw) {
+    const R = (m.platformy.rachunki || []).filter(rc => g.wszystkie || rc.platforma === g.nazwa);
+    if (!R.length) return null;
+    const nota = `<p class="b-male pl-akapit">Kwoty w ${ZNAK[w]}: każdy rachunek przeliczony po dzisiejszym kursie – nic nie jest ukryte. Rachunek w innej walucie ma też kwoty w swojej walucie (mniejszy druk). Pod kwotą pozycji: wynik od ceny zakupu.</p>`;
+    if (!g.wszystkie) return `<section class="karta"><h2>Rachunki i salda <small>${E(g.nazwa)} · ${odmiana(R.length, 'rachunek', 'rachunki', 'rachunków')}</small></h2>${R.map(rc => rachunek(rc, m, live, w, iw)).join('')}${nota}</section>`;
+    const platformy = [...new Set(R.map(rc => rc.platforma))];
+    return `<section class="karta"><h2>Wszystkie salda <small>${odmiana(R.length, 'rachunek', 'rachunki', 'rachunków')}</small></h2>${platformy.map(p => `<h3 class="pl-grupa">${E(p)}</h3>${R.filter(rc => rc.platforma === p).map(rc => rachunek(rc, m, live, w, iw)).join('')}`).join('')}${nota}</section>`;
+  }
 
   // ---------- widok jednej platformy ----------
   function widok(m, live) {
@@ -96,12 +131,14 @@
         <div class="s">${E(x.skad)}${g.kontaIds.length > 1 ? ' · ' + E(x.konto) : ''} · ${E(x.ile)}${x.bc ? ' · <span class="minus">brak ceny – liczone 0</span>' : ''}</div>
         <div class="s">wpłacone netto po: ${kw(x.n[iw], w)}</div></div>`).join('') : '<p class="male">Brak wpłat i wypłat.</p>'}
       <p class="b-male pl-akapit">${g.wszystkie ? 'Przelewy między Twoimi kontami (Kraken → Phantom → Hyperliquid, XTB PLN → IKE) się znoszą, więc ich tu nie ma.' : `Przelew z innej Twojej platformy jest dla tej platformy wpłatą.${g.ileWewnatrz ? ' Przesunięcia wewnątrz platformy (' + g.ileWewnatrz + ') się znoszą i ich tu nie ma.' : ''}`} ${w === 'USD' ? 'Kwota w USD z dnia operacji.' : 'Kwota po kursie NBP z dnia roboczego przed operacją.'} „≈” = wycena przybliżona.</p></section>`;
-    // z czego składa się wynik: platformy (dla „wszystkie”) albo konta platformy
+    // z czego składa się wynik: platformy (dla „wszystkie”), potem rachunki i salda; starsza migawka (bez sald) – konta platformy
+    const rach = sekcjaRachunkow(g, m, live, w, iw);
     const sklad = g.wszystkie ? P.grupy.filter(x => !x.wszystkie).map(x => { const z = zZywym(x, m, live); return { nazwa: z.nazwa, klucz: z.klucz, a: z.w[w] }; })
-      : g.konta ? g.konta.map(k => ({ nazwa: k.nazwa, pod: k.zrodlo, a: k.w[w] })) : null;
+      : !rach && g.konta ? g.konta.map(k => ({ nazwa: k.nazwa, pod: k.zrodlo, a: k.w[w] })) : null;
     if (sklad) h += `<section class="karta"><h2>${g.wszystkie ? 'Platformy' : 'Konta'} <small>wynik · do zera</small></h2>${sklad.map(s => `
       <div class="konto"${s.klucz ? ` data-pl="${E(s.klucz)}" role="button" tabindex="0"` : ''}><div class="nazwa"><span>${E(s.nazwa)}</span></div><div class="w"><b class="${kl(s.a.wynik)}">${kw(s.a.wynik, w, { znak: true })}</b></div>
         <div class="pod">wpłacone netto ${kw(s.a.netto, w)} · masz ${kw(s.a.wartosc, w)}${s.a.doZera > 0.005 ? ' · do zera ' + kw(s.a.doZera, w) + ' (' + doZeraTxt(s.a) + ')' : ''}${s.pod ? ' · ' + E(s.pod) : ''}</div></div>`).join('')}</section>`;
+    if (rach) h += rach;
     return h;
   }
 

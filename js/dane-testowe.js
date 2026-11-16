@@ -52,3 +52,17 @@ window.PIT_TESTOWY = { wersja: 1, czas: Date.now() - 30 * 60000, zrodlo: 'kalkul
     grupa('p:XTB', 'XTB', ['xtb'], 567.6, [bank(28, 600, 'XTB USD')])
   ] };
 })();
+// rachunki i salda (zmyślone): wartości jak w kontach powyżej
+(function () {
+  const P = window.MIGAWKA_TESTOWA.platformy, PLN = P.kursy.USDPLN, EUR = P.kursy.EURUSD;
+  const v = (usd) => [usd, usd * PLN, usd / EUR];
+  const g = (k) => P.grupy.find(x => x.klucz === k).w;
+  const s = (nazwa, usd, o) => Object.assign({ nazwa, opis: null, ilosc: null, jedn: null, r: 'aktywo', c: null, cw: null, nat: usd, v: v(usd), wn: null, wu: null, bc: false }, o || {});
+  P.rachunki = [
+    { id: 'hl', nazwa: 'Hyperliquid', krotka: 'Hyperliquid', platforma: 'Hyperliquid', waluta: 'USD', naZywo: true, zrodlo: 'na żywo', w: g('p:Hyperliquid'), salda: [s('Saldo USDC', 1250, { opis: 'z wynikiem otwartych pozycji', ilosc: 1250, jedn: 'USDC', r: 'reszta' })], pozycje: [{ nazwa: 'BTC long 40×', wu: 18.6 }] },
+    { id: 'sol', nazwa: 'Phantom – Solana', krotka: 'Solana', platforma: 'Phantom', waluta: 'USD', naZywo: true, zrodlo: 'na żywo', w: g('p:Phantom'), salda: [s('SOL', 120, { ilosc: 0.8, jedn: 'SOL', c: 150, cw: 'USD', wu: -6 }), s('USDC', 42.5, { ilosc: 42.5, jedn: 'USDC', c: 1, cw: 'USD' })], pozycje: [] },
+    { id: 'kr', nazwa: 'Kraken – spot', krotka: 'spot', platforma: 'Kraken', waluta: 'USD', naZywo: true, zrodlo: 'na żywo', w: g('p:Kraken'), salda: [s('BTC', 700, { ilosc: 0.0109, jedn: 'BTC', c: 64220, cw: 'USD', wu: 40 }), s('USD', 300, { ilosc: 300, jedn: 'USD', c: 1, cw: 'USD' })], pozycje: [] },
+    { id: 'xtb', nazwa: 'XTB – rachunek USD', krotka: 'rachunek USD', platforma: 'XTB', waluta: 'USD', naZywo: false, zrodlo: 'eksport sprzed tygodnia', w: g('p:XTB'), salda: [s('Gotówka', 67.6, { r: 'gotowka' }), s('CSPX.UK', 500, { opis: 'ETF S&P 500', ilosc: 0.6, jedn: 'szt.', c: 833.33, cw: 'USD', wu: -32.4, wn: -32.4, r: 'pozycja' })], pozycje: [] }
+  ];
+  P.wersja = 2;
+})();
