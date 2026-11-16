@@ -134,3 +134,73 @@ html.bez-przejsc *, html.bez-przejsc *::before, html.bez-przejsc *::after { tran
 [data-motyw="papier"] button.glowny, [data-motyw="papier"] button.drugi { font-family: var(--sans); border-radius: 8px; }
 [data-motyw="papier"] button.glowny { color: #fff; border: 1px solid #19305a; }
 [data-motyw="papier"] button.drugi { color: #141a29; background: #fffdf8; border: 1px solid #d6cebd; }
+
+/* ================= „Platformy”: kafelki w panelu i widok jednej platformy (js/panel-platformy.js) ================= */
+.pl-kafle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pl-kafel { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; text-align: left; padding: 10px 11px; border-radius: 13px;
+  background: rgba(255, 255, 255, .045); border: 1px solid rgba(255, 255, 255, .1); color: var(--tekst); font: inherit; cursor: pointer; min-height: 44px; }
+.pl-kafel:active { background: rgba(67, 240, 198, .1); border-color: rgba(67, 240, 198, .5); }
+.pl-kafel.pl-wszystkie { grid-column: 1 / -1; }
+.pl-kafel .n { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; color: var(--tekst2); font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pl-kafel .w { font: 800 1.08rem/1.2 var(--mono); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.pl-kafel.pl-wszystkie .w { font-size: 1.3rem; }
+.pl-kafel .p { font-size: .66rem; color: var(--tekst3); }
+.pl-karta .pl-waluty { margin-top: 10px; }
+.pl-pasek { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.pl-wroc { padding: 9px 14px; min-height: 40px; }
+.pl-wybor { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; margin-bottom: 4px; scrollbar-width: none; }
+.pl-wybor::-webkit-scrollbar { display: none; }
+.pl-wybor button { flex: none; border: 1px solid rgba(255, 255, 255, .15); border-radius: 999px; background: rgba(4, 14, 12, .62); color: var(--tekst2); font: 600 .74rem/1.2 var(--mono); padding: 9px 13px; cursor: pointer; }
+.pl-wybor button.wl { background: var(--przycisk-glowny); color: var(--na-akcencie); border-color: transparent; font-weight: 700; }
+.pl-zero { font-size: .82rem; color: var(--tekst2); margin: 6px 0 12px; }
+.wiersze .b-male { display: block; }
+.pl-akapit { margin: 10px 0 0; }
+.pl-uwaga { border-left: 3px solid var(--warning); padding-left: 8px; margin: 10px 0 0; }
+.konto[data-pl] { cursor: pointer; }
+.pl-op { padding: 9px 0; border-bottom: 1px solid rgba(255, 255, 255, .07); }
+.pl-op:last-of-type { border-bottom: 0; }
+.pl-op .g { display: flex; align-items: baseline; gap: 8px; }
+.pl-op .g b { margin-left: auto; font-variant-numeric: tabular-nums; font-size: .86rem; white-space: nowrap; }
+.pl-op .kier { font-size: .74rem; font-weight: 700; white-space: nowrap; }
+.pl-op .kier.wy { color: var(--tekst2); }
+.pl-op .d { font-size: .68rem; color: var(--tekst3); white-space: nowrap; }
+.pl-op .s { font-size: .7rem; color: var(--tekst3); margin-top: 2px; overflow-wrap: anywhere; }
+/* wykres */
+.pl-wykres { position: relative; margin: 2px -4px 0; }
+.pl-wykres svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; }
+.pl-wykres .siatka line { stroke: rgba(255, 255, 255, .075); stroke-width: 1; }
+.pl-wykres .os { fill: var(--tekst3); font: 9.5px var(--mono); }
+.pl-wykres .pl-dep { fill: none; stroke: var(--tekst2); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.pl-wykres .pl-wart { fill: none; stroke: var(--s-plus); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.pl-wykres .pl-luka { fill: none; stroke: var(--s-plus); stroke-width: 1.1; stroke-dasharray: 2 4; opacity: .7; }
+.pl-wykres .pl-pole-minus { fill: var(--s-minus); opacity: .25; }
+.pl-wykres .pl-pole-plus { fill: var(--s-plus); opacity: .2; }
+.pl-wykres .pl-krok { stroke-width: 1.3; }
+.pl-wykres .pl-krok.we { fill: var(--tekst2); stroke: rgba(1, 20, 17, .9); }
+.pl-wykres .pl-krok.wy { fill: rgba(1, 20, 17, .9); stroke: var(--tekst2); }
+.pl-wykres .pl-pkt { fill: var(--s-plus); stroke: rgba(1, 20, 17, .9); stroke-width: 1.3; }
+.pl-wykres .pl-pkt.teraz { stroke-width: 2.2; }
+.pl-wykres .kursor { stroke: var(--tekst3); stroke-width: 1; }
+.pl-wykres .dymek { position: absolute; pointer-events: none; background: #04241f; border: 1px solid rgba(255, 255, 255, .16); border-radius: 10px; padding: 6px 9px; font-size: .7rem; line-height: 1.45; box-shadow: 0 12px 30px rgba(0, 0, 0, .5); white-space: nowrap; z-index: 5; }
+.pl-legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 8px 0 4px; }
+.pl-l { display: inline-block; width: 16px; height: 0; margin-left: 6px; }
+.pl-l:first-child { margin-left: 0; }
+.pl-l-dep { border-top: 2px dashed var(--tekst2); }
+.pl-l-wart { border-top: 3px solid var(--s-plus); }
+.pl-l-minus, .pl-l-plus { width: 11px; height: 9px; border-radius: 2px; }
+.pl-l-minus { background: var(--s-minus); opacity: .5; } .pl-l-plus { background: var(--s-plus); opacity: .45; }
+/* Papier (jasny) */
+[data-motyw="papier"] .pl-kafel { background: #faf7f0; border: 1px solid #ebe5d9; border-radius: 10px; font-family: var(--sans); }
+[data-motyw="papier"] .pl-kafel:active { background: #f1ede4; border-color: var(--akcent); }
+[data-motyw="papier"] .pl-kafel .w { font-family: var(--mono); font-weight: 700; }
+[data-motyw="papier"] .pl-wybor button { background: #efeae0; border: 1px solid #e5dfd3; color: var(--tekst2); font-family: var(--sans); border-radius: 8px; }
+[data-motyw="papier"] .pl-wybor button.wl { background: var(--akcent); color: #fff; }
+[data-motyw="papier"] .pl-op { border-bottom-color: #ece6da; }
+[data-motyw="papier"] .pl-wykres .siatka line { stroke: #ece6da; }
+[data-motyw="papier"] .pl-wykres .pl-krok.we { stroke: #fffdf8; }
+[data-motyw="papier"] .pl-wykres .pl-krok.wy, [data-motyw="papier"] .pl-wykres .pl-pkt { stroke: #fffdf8; }
+[data-motyw="papier"] .pl-wykres .pl-krok.wy { fill: #fffdf8; }
+[data-motyw="papier"] .pl-wykres .dymek { background: #fffdf8; border: 1px solid #e5dfd3; color: var(--tekst); box-shadow: 0 8px 22px -10px rgba(28, 35, 51, .3); }
+[data-motyw="papier"] .pl-wykres .pl-wart { stroke: var(--akcent); }
+[data-motyw="papier"] .pl-l-wart { border-top-color: var(--akcent); }
+[data-motyw="papier"] .pl-wykres .pl-pkt { fill: var(--akcent); }

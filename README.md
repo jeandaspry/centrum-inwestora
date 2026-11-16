@@ -11,6 +11,8 @@ Aplikacja webowa (PWA) na iPhone'a: **Panel**, **Asystent rynku** i **Laboratori
   (kopiuje go `narzedzia/zbuduj-telefon.ps1` w folderze Centrum-Inwestora).
 - **Panel** pokazuje migawkę wyników wysyłaną przez panel na komputerze do prywatnego Firebase (Firestore), a pozycje
   Hyperliquid liczy na żywo z publicznego API. Dane widzi wyłącznie zalogowany właściciel konta (`firestore.rules`).
+  Kafelki **Platformy** (`js/panel-platformy.js`): na każdej platformie wpłaty i wypłaty z datami, wynik i ile trzeba zarobić,
+  żeby wyjść na zero – w USD, PLN albo EUR, z wykresem; liczby przychodzą gotowe w migawce z panelu.
 - W repozytorium jest tylko kod: bez danych finansowych, adresów, kluczy i haseł. `js/dane-testowe.js` to dane zmyślone.
 
 Instalacja na iPhonie: Safari → Udostępnij → Do ekranu początkowego.

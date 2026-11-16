@@ -100,6 +100,11 @@
     $('stan').innerHTML = `<span class="k"><span class="kropka ${kolor}"></span>migawka z komputera ${godz(m.czas)} (${temu(m.czas)})${S.zKopii ? ', bez internetu' : ''}${TEST ? ' – DANE ZMYŚLONE' : ''}</span>`
       + (m.hl && m.hl.adresy.length ? `<span class="k"><span class="kropka ${S.hlBlad ? 'blad' : S.hl ? 'zywe' : ''}"></span>${S.hlBlad ? 'Hyperliquid: brak połączenia' : S.hl ? 'Hyperliquid na żywo' : 'łączę z Hyperliquid…'}</span>` : '');
 
+    // „Platformy” (js/panel-platformy.js): po dotknięciu kafelka – widok jednej platformy zamiast panelu
+    const PP = window.PanelPlatformy, zywyHL = zm.stan === 'ok' && zm.d ? { d: zm.d, konto: zm.konto } : null;
+    if (PP && PP.otwarty(m)) { const hw = PP.widok(m, zywyHL); if (hw !== null) { $('zakres').style.display = 'none'; $('tresc').innerHTML = hw; PP.po(); return; } }
+    $('zakres').style.display = '';
+
     let h = '';
     if (m.pilne && m.pilne.length) h += `<div class="ramka blad"><b>Uwaga – dane mogą być niepełne:</b><ul>${m.pilne.map(t => `<li>${E(t)}</li>`).join('')}</ul></div>`;
     if (zm.stan === 'zmiana') h += `<div class="ramka uwaga">Pozycje na Hyperliquid zmieniły się od migawki. Suma poniżej jest z migawki, a nowe pozycje widać na żywo niżej. Pełny wynik policzy panel na komputerze.</div>`;
@@ -125,6 +130,7 @@
         <div class="male" style="margin:0">${c.osiagniety ? '<b>Cel osiągnięty!</b>' : `Brakuje <b>${usd(c.zostalo)}</b>`}<br>tempo ${usd(c.naDzien, true)}/dzień${c.dataCelu && c.dniDoCelu <= 3650 ? '<br>cel ok. ' + new Date(c.dataCelu).toLocaleDateString('pl-PL') : c.naDzien <= 0 ? '<br>przy tym tempie celu nie widać' : ''}</div>
       </div>
     </section>`;
+    if (PP) h += PP.kafle(m, zywyHL);
 
     // pozycje: Hyperliquid na żywo (jeśli jest połączenie) + pozostałe z migawki
     const snapHL = m.pozycje.filter(p => p.platforma === 'hyperliquid'), inne = m.pozycje.filter(p => p.platforma !== 'hyperliquid');
@@ -222,6 +228,7 @@
     window.CHMURA.sluchaj('pit', (d) => { S.pit = d; rysuj(); });
   }
 
+  if (window.PanelPlatformy) window.PanelPlatformy.init({ rysuj, pam });
   document.getElementById('zakres').addEventListener('click', (e) => { const b = e.target.closest('[data-z]'); if (!b) return; S.zakres = b.dataset.z; pam.pisz('panel-zakres', S.zakres); rysuj(); });
   setInterval(pobierzHL, 10000);
   setInterval(() => { if (!document.hidden) rysuj(); }, 30000);
