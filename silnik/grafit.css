@@ -1,0 +1,239 @@
+/* Motyw „Grafit” (od 17.11.2026) – ciemny jak terminal giełdowy nocą: grafitowe, prawie czarne tło, płaskie karty z cienką
+ * ramką, ciepły bursztynowy akcent zamiast morskiej poświaty, zysk zielony, strata koralowa, przyciski z lekko zaokrąglonymi
+ * rogami zamiast pigułek, zakładki z bursztynowym podkreśleniem. Tekst Inter Tight, liczby JetBrains Mono.
+ * Działa tylko gdy <html data-motyw="grafit"> (ustawia motyw.js). Motyw morski (asystent.css, laboratorium.css, dziennik.css)
+ * i Papier (papier.css) zostają nietknięte – ten plik niczego nie zmienia, dopóki Grafit nie jest włączony.
+ * Wyjątek: na dole napisy przełącznika motywu (.motyw-przelacz) – trzy motywy po kolei: Morski → Papier → Grafit. */
+
+/* ================= tokeny ================= */
+:root[data-motyw="grafit"] {
+  color-scheme: dark;
+  --rgb-j: 255, 255, 255; --rgb-akcent: 245, 165, 36; --rgb-plus: 76, 207, 138; --rgb-minus: 255, 114, 98; --rgb-info: 92, 179, 255; --rgb-ostrz: 245, 197, 24;
+  --tlo: #0d0f12; --karta: #15181d; --g-kafel: #1b1f26; --g-ramka: rgba(255, 255, 255, .08); --g-ramka2: rgba(255, 255, 255, .15); --g-wglebienie: #101318;
+  --tekst: #ece8e1; --tekst2: #b4ada3; --tekst3: #8b857c; --tekst-mocny: #fffaf2; --szary: #9d968c;
+  --linia: rgba(255, 255, 255, .12); --linia2: rgba(255, 255, 255, .07); --wykres2: rgba(180, 173, 163, .45);
+  --akcent: #f5a524; --akcent-tlo: rgba(245, 165, 36, .13); --na-akcencie: #1d1404;
+  --plus: #4ccf8a; --minus: #ff7262; --s-plus: #4ccf8a; --s-minus: #ff7262;
+  --zysk: #3fb97a; --strata: #e0574a; --ostrz: #f5c518;
+  --ok: #4ccf8a; --info: #5cb3ff; --warning: #f5c518; --serious: #ff9a3d; --critical: #ff5a52;
+  --ok-tlo: rgba(76, 207, 138, .13); --info-tlo: rgba(92, 179, 255, .13); --warning-tlo: rgba(245, 197, 24, .12); --critical-tlo: rgba(255, 90, 82, .14);
+  --zysk-tlo: rgba(76, 207, 138, .13); --strata-tlo: rgba(255, 114, 98, .14); --ostrz-tlo: rgba(245, 197, 24, .12);
+  --plus-tlo: rgba(76, 207, 138, .12); --minus-tlo: rgba(255, 114, 98, .12);
+  --pole-tlo: #15181d; --pole-tlo2: #15181d; --pole-tlo-hover: #1b1f26; --wejscie-tlo: #101318; --pasek-tlo: rgba(13, 15, 18, .9);
+  --as-slupki: rgba(180, 173, 163, .3); --as-poswiata: 0;
+  --r: 12px;
+  --mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --sans: "Inter Tight", "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --szklo: #15181d;
+  --przycisk-glowny: linear-gradient(180deg, #ffbf47 0%, #f5a524 55%, #e08a0b 100%);
+  --cien: 0 18px 40px -28px rgba(0, 0, 0, .8);
+  /* wykresy (dziennik-wykresy.js, dziennik.js) */
+  --wyk-tekst: rgba(236, 232, 225, .6); --wyk-siatka-pion: rgba(255, 255, 255, .03); --wyk-siatka: rgba(255, 255, 255, .05); --wyk-ramka: rgba(255, 255, 255, .1);
+  --wyk-celownik: rgba(245, 165, 36, .45); --wyk-celownik-tlo: #b9770a; --wyk-celownik-mini: rgba(255, 255, 255, .3);
+  --wyk-wzrost: #4ccf8a; --wyk-spadek: #ff7262; --wyk-knot-wzrost: rgba(76, 207, 138, .8); --wyk-knot-spadek: rgba(255, 114, 98, .8);
+  --wyk-wol-wzrost: rgba(76, 207, 138, .25); --wyk-wol-spadek: rgba(255, 114, 98, .25);
+  --wyk-wejscie: #fffaf2; --wyk-wyjscie: #f5a524; --wyk-sl: #ff7262; --wyk-tp: #4ccf8a; --wyk-plan: #5cb3ff;
+  --wyk-kup: #4ccf8a; --wyk-sprzedaj: #ff7262;
+  --wyk-krzywa: #f5a524; --wyk-krzywa-gora: rgba(245, 165, 36, .26); --wyk-krzywa-dol: rgba(245, 165, 36, 0); --wyk-krzywa2: #5cb3ff;
+  --wyk-zero: rgba(255, 255, 255, .32); --wyk-zero-mini: rgba(255, 255, 255, .28); --wyk-czcionka: "JetBrains Mono", ui-monospace, monospace;
+  --wyk-plus: #4ccf8a; --wyk-plus-gora: rgba(76, 207, 138, .26); --wyk-plus-dol: rgba(76, 207, 138, 0);
+  --wyk-minus: #ff7262; --wyk-minus-gora: rgba(255, 114, 98, .24); --wyk-minus-dol: rgba(255, 114, 98, 0);
+  --wyk-dymek: rgba(27, 31, 38, .97); --wyk-dymek-tekst: #ece8e1;
+  scrollbar-color: rgba(255, 255, 255, .2) transparent;
+}
+
+/* ================= podstawy ================= */
+[data-motyw="grafit"] body {
+  font-family: var(--sans); font-size: 14.5px; letter-spacing: 0; color: var(--tekst); background-color: var(--tlo);
+  background-image: radial-gradient(70% 45% at 50% -12%, rgba(245, 165, 36, .1), transparent 70%), linear-gradient(180deg, #111419 0%, #0d0f12 40%, #0a0b0e 100%);
+  background-attachment: fixed;
+}
+[data-motyw="grafit"] body::before { display: none; }
+html[data-motyw="grafit"][data-w-centrum] body { background: transparent; }
+[data-motyw="grafit"] ::selection { background: rgba(245, 165, 36, .32); color: var(--tekst-mocny); }
+[data-motyw="grafit"] h1, [data-motyw="grafit"] h2, [data-motyw="grafit"] h3 { font-family: var(--sans); }
+[data-motyw="grafit"] a { color: var(--akcent); text-decoration-color: rgba(245, 165, 36, .4); }
+[data-motyw="grafit"] a:hover { text-decoration-color: currentColor; }
+[data-motyw="grafit"] .num, [data-motyw="grafit"] .wart, [data-motyw="grafit"] .cena-t { font-family: var(--mono); letter-spacing: -.01em; }
+[data-motyw="grafit"] table:not(.tab) { font-family: var(--mono); font-size: .78rem; }
+[data-motyw="grafit"] th { font-family: var(--sans); font-weight: 600; color: var(--tekst3); }
+[data-motyw="grafit"] tr.wazny td, [data-motyw="grafit"] tr.wazny:hover td { background: rgba(245, 165, 36, .08); }
+
+/* ================= górny pasek i zakładki (bursztynowe podkreślenie zamiast pigułek) ================= */
+[data-motyw="grafit"] .pasek { background: var(--pasek-tlo); border-bottom: 1px solid var(--g-ramka); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+[data-motyw="grafit"] .pasek h1 { font-weight: 700; letter-spacing: -.01em; color: var(--tekst-mocny); }
+[data-motyw="grafit"] .pasek h1::before { background: var(--akcent); }
+[data-motyw="grafit"] .pasek-wn:has(> .nawigacja) { padding-bottom: 0; }
+[data-motyw="grafit"] .nawigacja { gap: 2px; padding: 4px 0 0; }
+[data-motyw="grafit"] .nawigacja a { font: 600 .86rem/1 var(--sans); color: var(--tekst2); padding: 10px 12px 12px; border-radius: 0; border: 0; background: none; box-shadow: inset 0 -2px 0 transparent; transition: color .15s, box-shadow .15s; }
+[data-motyw="grafit"] .nawigacja a:hover { color: var(--tekst-mocny); background: none; box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .2); }
+[data-motyw="grafit"] .nawigacja a.wl { color: #ffbf47; background: none; box-shadow: inset 0 -2px 0 var(--akcent); }
+[data-motyw="grafit"] .stan { color: var(--tekst2); }
+[data-motyw="grafit"] .kropka.zywe { background: var(--plus); box-shadow: 0 0 0 3px rgba(76, 207, 138, .16); }
+
+/* ================= przyciski, pola, przełączniki ================= */
+[data-motyw="grafit"] button, [data-motyw="grafit"] .przycisk {
+  font-family: var(--sans); font-weight: 600; letter-spacing: 0; color: var(--tekst); border-radius: 8px;
+  background: #15181d; border: 1px solid rgba(255, 255, 255, .13); box-shadow: none;
+}
+[data-motyw="grafit"] button:hover, [data-motyw="grafit"] .przycisk:hover { background: #1b1f26; border-color: rgba(255, 255, 255, .26); }
+[data-motyw="grafit"] button.glowny, [data-motyw="grafit"] #start {
+  background: var(--przycisk-glowny); color: var(--na-akcencie); border: 1px solid #c87a06; font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 18px -10px rgba(245, 165, 36, .8);
+}
+[data-motyw="grafit"] button.glowny:hover, [data-motyw="grafit"] #start:hover { background: var(--przycisk-glowny); filter: brightness(1.08); }
+[data-motyw="grafit"] button.drugi { color: var(--tekst2); }
+[data-motyw="grafit"] input[type=number], [data-motyw="grafit"] input[type=text], [data-motyw="grafit"] input:not([type]),
+[data-motyw="grafit"] select, [data-motyw="grafit"] textarea {
+  font-family: var(--sans); color: var(--tekst-mocny); background: var(--wejscie-tlo); border: 1px solid rgba(255, 255, 255, .13); border-radius: 8px;
+}
+[data-motyw="grafit"] input[type=number], [data-motyw="grafit"] .pole input[inputmode=decimal], [data-motyw="grafit"] .pole input[inputmode=numeric] { font-family: var(--mono); }
+[data-motyw="grafit"] input:focus, [data-motyw="grafit"] select:focus { border-color: var(--akcent); box-shadow: 0 0 0 3px rgba(245, 165, 36, .18); }
+[data-motyw="grafit"] input::placeholder, [data-motyw="grafit"] textarea::placeholder { color: #6f6a62; }
+[data-motyw="grafit"] select option { background: #15181d; color: var(--tekst); }
+[data-motyw="grafit"] label { color: var(--tekst3); font-weight: 500; }
+/* przełączniki segmentowe: zaznaczony = bursztynowy pasek u dołu */
+[data-motyw="grafit"] .przelacznik, [data-motyw="grafit"] .w-iw { background: var(--g-wglebienie); border: 1px solid var(--g-ramka); border-radius: 9px; padding: 3px; }
+[data-motyw="grafit"] .przelacznik button, [data-motyw="grafit"] .w-iw button { border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--tekst2); }
+[data-motyw="grafit"] .przelacznik button:hover, [data-motyw="grafit"] .w-iw button:hover { background: rgba(255, 255, 255, .05); color: var(--tekst-mocny); }
+[data-motyw="grafit"] .przelacznik button.wl, [data-motyw="grafit"] .w-iw button.wl { background: rgba(245, 165, 36, .14); color: #ffbf47; font-weight: 700; box-shadow: inset 0 -2px 0 var(--akcent); }
+/* filtry i wybory: zaznaczone = bursztynowe */
+[data-motyw="grafit"] .filtry-pasek button, [data-motyw="grafit"] .chipy button, [data-motyw="grafit"] .szybkie button { border-radius: 8px; background: #15181d; border: 1px solid rgba(255, 255, 255, .13); color: var(--tekst2); }
+[data-motyw="grafit"] .filtry-pasek button.wl, [data-motyw="grafit"] .chipy button.wl, [data-motyw="grafit"] .szybkie button.wl { background: rgba(245, 165, 36, .14); border-color: rgba(245, 165, 36, .6); color: #ffbf47; box-shadow: none; }
+[data-motyw="grafit"] .chipy.bledy button.wl { background: rgba(255, 114, 98, .14); border-color: rgba(255, 114, 98, .6); color: #ff9f94; }
+/* suwaki */
+[data-motyw="grafit"] input[type=range] { background: linear-gradient(90deg, #4ccf8a 0%, #f5c518 55%, #ff5a52 100%); }
+[data-motyw="grafit"] input[type=range]::-webkit-slider-thumb { background: #fffaf2; border: 3px solid var(--akcent); box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+[data-motyw="grafit"] input[type=range]::-moz-range-thumb { background: #fffaf2; border: 3px solid var(--akcent); box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+[data-motyw="grafit"] .suwak input[type=range] { background: linear-gradient(90deg, #2a2f38, #f5a524); accent-color: var(--akcent); }
+[data-motyw="grafit"] .pasek-postepu { background: rgba(255, 255, 255, .08); }
+[data-motyw="grafit"] .pasek-postepu i { background: var(--akcent); box-shadow: none; }
+
+/* ================= karty i kafelki ================= */
+[data-motyw="grafit"] .karta { background: var(--karta); border: 1px solid var(--g-ramka); border-radius: 12px; box-shadow: var(--cien); }
+[data-motyw="grafit"] .karta > h2, [data-motyw="grafit"] .sekcja-tytul h2 { font-family: var(--sans); font-weight: 700; letter-spacing: -.01em; color: var(--tekst-mocny); }
+[data-motyw="grafit"] .karta > h2::before { background: var(--akcent); }
+[data-motyw="grafit"] .karta > h2 .podtytul { font-family: var(--sans); font-weight: 500; color: var(--tekst3); }
+[data-motyw="grafit"] .tytul-strony { font-family: var(--sans); font-weight: 700; letter-spacing: -.03em; text-shadow: none; color: var(--tekst-mocny); }
+[data-motyw="grafit"] .tytul-strony .cena { font-family: var(--mono); }
+[data-motyw="grafit"] .kafel, [data-motyw="grafit"] .liczby div, [data-motyw="grafit"] .panel-dzw, [data-motyw="grafit"] .dzis-pole,
+[data-motyw="grafit"] .blok, [data-motyw="grafit"] .zasada, [data-motyw="grafit"] .ramka {
+  background: var(--g-kafel); border: 1px solid var(--g-ramka); border-radius: 10px; box-shadow: none;
+}
+[data-motyw="grafit"] .kafel .wart, [data-motyw="grafit"] .liczby b { font-family: var(--mono); font-weight: 700; letter-spacing: -.03em; }
+[data-motyw="grafit"] .kafel .et, [data-motyw="grafit"] .liczby div > span { color: var(--tekst3); }
+[data-motyw="grafit"] .kafel.tp { border-left: 3px solid var(--plus); } [data-motyw="grafit"] .kafel.sl { border-left: 3px solid var(--warning); }
+[data-motyw="grafit"] .kafel.lik { border-left: 3px solid var(--critical); } [data-motyw="grafit"] .kafel.we { border-left: 3px solid var(--tekst3); }
+[data-motyw="grafit"] .ramka.uwaga, [data-motyw="grafit"] .ostrzezenie { background: var(--warning-tlo); border-color: rgba(245, 197, 24, .4); }
+[data-motyw="grafit"] .ramka.blad { background: var(--critical-tlo); border-color: rgba(255, 90, 82, .45); }
+[data-motyw="grafit"] .ramka.ok { background: var(--ok-tlo); border-color: rgba(76, 207, 138, .4); }
+[data-motyw="grafit"] .ostrzezenie { border-radius: 10px; }
+/* znaczniki (w morskim „ok” = kolor akcentu; tu akcent jest bursztynowy, więc „ok” dostaje zieleń) */
+[data-motyw="grafit"] .znacznik, [data-motyw="grafit"] .znak { border-radius: 6px; }
+[data-motyw="grafit"] .znacznik.ok, [data-motyw="grafit"] .znak.ok { color: var(--plus); background: var(--ok-tlo); border-color: rgba(76, 207, 138, .35); }
+[data-motyw="grafit"] .znacznik.uwaga, [data-motyw="grafit"] .znak.pom { color: var(--warning); background: var(--warning-tlo); border-color: rgba(245, 197, 24, .35); }
+[data-motyw="grafit"] .znacznik.zle, [data-motyw="grafit"] .znak.zle { color: var(--minus); background: var(--critical-tlo); border-color: rgba(255, 90, 82, .4); }
+[data-motyw="grafit"] .znacznik.info { color: var(--info); background: var(--info-tlo); border-color: rgba(92, 179, 255, .35); }
+
+/* ================= Asystent ================= */
+[data-motyw="grafit"] .decyzja { font-family: var(--sans); font-weight: 800; letter-spacing: -.04em; }
+[data-motyw="grafit"] .decyzja.long, [data-motyw="grafit"] .decyzja.short { text-shadow: none; }
+[data-motyw="grafit"] .dzw-wart b, [data-motyw="grafit"] .fng b { font-family: var(--mono); font-weight: 700; letter-spacing: -.03em; }
+[data-motyw="grafit"] .pasek-szans { background: var(--g-wglebienie); }
+[data-motyw="grafit"] .pasek-szans .c { background: var(--plus); box-shadow: none; }
+[data-motyw="grafit"] .pasek-szans .t { background: rgba(255, 255, 255, .18); }
+[data-motyw="grafit"] .miernik i { background: #fffaf2; border-color: var(--akcent); box-shadow: 0 1px 4px rgba(0, 0, 0, .5); }
+[data-motyw="grafit"] .miernik.strefy { background: linear-gradient(90deg, rgba(255, 114, 98, .5) 0 30%, rgba(255, 255, 255, .1) 30% 70%, rgba(76, 207, 138, .5) 70% 100%); }
+[data-motyw="grafit"] .fng .miernik { background: linear-gradient(90deg, #ff5a52, #f5c518 50%, #4ccf8a); }
+[data-motyw="grafit"] .news li a { color: var(--tekst); }
+
+/* ================= Dziennik ================= */
+[data-motyw="grafit"] .hero-wynik, [data-motyw="grafit"] .hero-wynik.strata {
+  background: var(--karta); border: 1px solid var(--g-ramka); border-radius: 12px; box-shadow: inset 0 3px 0 var(--plus), var(--cien);
+}
+[data-motyw="grafit"] .hero-wynik.strata { box-shadow: inset 0 3px 0 var(--minus), var(--cien); }
+[data-motyw="grafit"] .hero-wynik .kwota { font-family: var(--mono); font-weight: 700; letter-spacing: -.04em; }
+[data-motyw="grafit"] .hero-wynik .et, [data-motyw="grafit"] .wniosek .temat { color: var(--tekst3); letter-spacing: .1em; }
+[data-motyw="grafit"] .dzis-pole .ikona { background: var(--g-wglebienie); border-radius: 8px; }
+[data-motyw="grafit"] .dzis-pole.ok .ikona { background: var(--plus-tlo); } [data-motyw="grafit"] .dzis-pole.uwaga .ikona { background: var(--warning-tlo); } [data-motyw="grafit"] .dzis-pole.zle .ikona { background: var(--minus-tlo); }
+[data-motyw="grafit"] .dzis-pole.zle { border-color: rgba(255, 114, 98, .35); } [data-motyw="grafit"] .dzis-pole.uwaga { border-color: rgba(245, 197, 24, .35); }
+/* dni */
+[data-motyw="grafit"] .dzien-nawig button { border-radius: 8px; }
+[data-motyw="grafit"] .dzien-chip { background: #15181d; border: 1px solid var(--g-ramka); border-radius: 10px; }
+[data-motyw="grafit"] .dzien-chip.plus { background: linear-gradient(180deg, rgba(76, 207, 138, .1), rgba(76, 207, 138, .02)), #15181d; border-color: rgba(76, 207, 138, .3); }
+[data-motyw="grafit"] .dzien-chip.minus { background: linear-gradient(180deg, rgba(255, 114, 98, .1), rgba(255, 114, 98, .02)), #15181d; border-color: rgba(255, 114, 98, .3); }
+[data-motyw="grafit"] .dzien-chip.wl { outline: 2px solid var(--akcent); border-color: transparent; }
+[data-motyw="grafit"] .dzien-chip:hover { border-color: var(--g-ramka2); }
+/* postęp */
+[data-motyw="grafit"] .postep { background: var(--g-wglebienie); border-radius: 8px; }
+[data-motyw="grafit"] .postep i { background: rgba(245, 165, 36, .25); }
+/* trade'y */
+[data-motyw="grafit"] .trade { background: #15181d; border: 1px solid var(--g-ramka); border-radius: 10px; }
+[data-motyw="grafit"] .trade::before { width: 3px; }
+[data-motyw="grafit"] .trade.plus { --pas: var(--plus); } [data-motyw="grafit"] .trade.minus { --pas: var(--minus); }
+[data-motyw="grafit"] .trade:hover { border-color: rgba(255, 255, 255, .22); background: #1b1f26; }
+[data-motyw="grafit"] .trade.plan { border-color: rgba(92, 179, 255, .45); --pas: var(--info); }
+[data-motyw="grafit"] .trade .kier { border-radius: 6px; }
+[data-motyw="grafit"] .dzien-naglowek { color: var(--tekst2); border-bottom: 1px solid var(--g-ramka); padding-bottom: 6px; }
+[data-motyw="grafit"] .kier.long { color: var(--plus); background: var(--plus-tlo); box-shadow: inset 0 0 0 1px rgba(76, 207, 138, .35); }
+[data-motyw="grafit"] .kier.short { color: var(--minus); background: var(--minus-tlo); box-shadow: inset 0 0 0 1px rgba(255, 114, 98, .4); }
+[data-motyw="grafit"] .flaga { background: #1b1f26; border-color: var(--g-ramka); color: var(--tekst2); }
+[data-motyw="grafit"] .flaga.zle { color: #ff9f94; background: var(--minus-tlo); border-color: rgba(255, 114, 98, .3); }
+[data-motyw="grafit"] .flaga.ok { color: #7fe0a8; background: var(--plus-tlo); border-color: rgba(76, 207, 138, .3); }
+[data-motyw="grafit"] .flaga.uwaga { color: #f7d35c; background: var(--warning-tlo); border-color: rgba(245, 197, 24, .3); }
+[data-motyw="grafit"] .flaga.info { color: #96cdff; background: var(--info-tlo); border-color: rgba(92, 179, 255, .3); }
+[data-motyw="grafit"] .flaga.setup { color: #ffbf47; background: rgba(245, 165, 36, .1); border-color: rgba(245, 165, 36, .3); }
+[data-motyw="grafit"] .flaga.wpis-pelny { color: #7fe0a8; } [data-motyw="grafit"] .flaga.wpis-auto { color: #96cdff; }
+[data-motyw="grafit"] .flaga.wpis-pusty { background: transparent; border-color: rgba(255, 255, 255, .2); }
+[data-motyw="grafit"] .auto-zn { color: #96cdff; }
+/* okno trade'u */
+[data-motyw="grafit"] .okno { background: rgba(5, 6, 8, .6); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+[data-motyw="grafit"] .okno-wn { background: #15181d; border: 1px solid rgba(255, 255, 255, .12); border-radius: 14px; box-shadow: 0 40px 100px -24px rgba(0, 0, 0, .9); }
+[data-motyw="grafit"] .okno-gora { background: rgba(21, 24, 29, .97); border-bottom-color: var(--g-ramka); border-radius: 14px 14px 0 0; }
+[data-motyw="grafit"] .okno-gora h2 { font-family: var(--sans); font-weight: 700; letter-spacing: -.01em; }
+[data-motyw="grafit"] .okno-gora h2 .kwota { font-family: var(--mono); font-weight: 700; }
+[data-motyw="grafit"] .zamknij { border-radius: 8px; }
+[data-motyw="grafit"] .blok h3 { color: var(--tekst-mocny); }
+[data-motyw="grafit"] .wykres, [data-motyw="grafit"] .wykres-lw .w-plotno { background: #101318; box-shadow: inset 0 0 0 1px var(--g-ramka); border-radius: 8px; }
+[data-motyw="grafit"] .decyzja-mala { border-radius: 8px; }
+[data-motyw="grafit"] .decyzja-mala.long { color: var(--plus); } [data-motyw="grafit"] .decyzja-mala.short { color: var(--minus); } [data-motyw="grafit"] .decyzja-mala.czekaj { color: var(--warning); }
+[data-motyw="grafit"] .pole { color: var(--tekst2); }
+[data-motyw="grafit"] .pole input, [data-motyw="grafit"] .pole select, [data-motyw="grafit"] .pole textarea { border-radius: 8px; }
+[data-motyw="grafit"] .oceny button { border-radius: 8px; }
+[data-motyw="grafit"] .oceny button.wl[data-v="A"] { background: #4ccf8a; border-color: #4ccf8a; color: #06210f; }
+[data-motyw="grafit"] .oceny button.wl[data-v="B"] { background: #a3d977; border-color: #a3d977; color: #14210a; }
+[data-motyw="grafit"] .oceny button.wl[data-v="C"] { background: #f5c518; border-color: #f5c518; color: #251c02; }
+[data-motyw="grafit"] .oceny button.wl[data-v="D"] { background: #ff7262; border-color: #ff7262; color: #2a0703; }
+[data-motyw="grafit"] .suwak .wartosc-conf { background: var(--g-kafel); border-color: var(--g-ramka); border-radius: 8px; }
+[data-motyw="grafit"] .lista-zasad .ikonka { border-radius: 6px; }
+[data-motyw="grafit"] .lista-zasad .t { color: var(--plus); } [data-motyw="grafit"] .lista-zasad .f { color: var(--minus); } [data-motyw="grafit"] .lista-zasad .n { background: var(--g-wglebienie); }
+/* wnioski, zasady, setupy */
+[data-motyw="grafit"] .wniosek { border-top-color: var(--g-ramka); }
+[data-motyw="grafit"] .paski .os { background: var(--g-wglebienie); }
+[data-motyw="grafit"] .paski .os::before { background: rgba(255, 255, 255, .3); }
+[data-motyw="grafit"] .paski .os i.p { background: linear-gradient(90deg, rgba(76, 207, 138, .45), #4ccf8a); }
+[data-motyw="grafit"] .paski .os i.m { background: linear-gradient(270deg, rgba(255, 114, 98, .45), #ff7262); }
+[data-motyw="grafit"] .zasada h3 .nr { background: var(--akcent); color: var(--na-akcencie); border-radius: 6px; font-weight: 700; }
+[data-motyw="grafit"] .zasada .liczby div { background: #15181d; border: 1px solid var(--g-ramka); border-radius: 8px; }
+[data-motyw="grafit"] .zasada .pasek-z { background: rgba(255, 114, 98, .3); }
+[data-motyw="grafit"] .zasada .pasek-z i { background: var(--plus); }
+[data-motyw="grafit"] table.tab th { border-bottom-color: var(--g-ramka2); }
+[data-motyw="grafit"] table.tab td { border-bottom-color: rgba(255, 255, 255, .06); }
+[data-motyw="grafit"] table.tab tr:hover td { background: rgba(255, 255, 255, .025); }
+@media (max-width: 760px) {
+  [data-motyw="grafit"] table.tab.karty-mobilne tr { background: #15181d; border-color: var(--g-ramka); border-radius: 10px; }
+}
+@media (max-width: 600px) {
+  [data-motyw="grafit"] body { font-size: 15px; }
+  [data-motyw="grafit"] .okno-wn, [data-motyw="grafit"] .okno-gora { border-radius: 0; }
+}
+
+/* ================= przełącznik motywu: trzy motywy po kolei (napis = następny motyw) =================
+ * papier.css opisuje dwa motywy (Morski ↔ Papier); tu dochodzi Grafit: Morski → Papier → Grafit → Morski. */
+:root {
+  --ikona-fala: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1'/><path d='M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1'/><path d='M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1'/></svg>");
+}
+[data-motyw="papier"] button.motyw-przelacz::after { content: "Grafit"; }
+[data-motyw="grafit"] button.motyw-przelacz::before { -webkit-mask-image: var(--ikona-fala); mask-image: var(--ikona-fala); }
+[data-motyw="grafit"] button.motyw-przelacz::after { content: "Morski"; }
+@media (max-width: 600px) { html[data-motyw] button.motyw-przelacz::after { content: none; } }

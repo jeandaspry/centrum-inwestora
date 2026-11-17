@@ -119,8 +119,8 @@ button.link { display: block; margin: 20px auto 0; padding: 8px; border: 0; back
 @keyframes wjazd { from { transform: translateY(-12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .wczytywanie::after, .baner { animation: none; } }
 
-/* ---------------- „Więcej” → Wygląd: wybór motywu (oba motywy; zaznaczenie ustawia silnik/motyw.js) */
-.motyw-wybor { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+/* ---------------- „Więcej” → Wygląd: wybór motywu (Morski, Papier, Grafit; zaznaczenie ustawia silnik/motyw.js) */
+.motyw-wybor { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
 .motyw-wybor button { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 10px 10px 12px; border-radius: 14px; cursor: pointer;
   background: rgba(4, 14, 12, .62); border: 1px solid rgba(255, 255, 255, .15); color: var(--tekst2); font: 500 .7rem/1.3 var(--mono); }
 .motyw-wybor button b { font: 700 .88rem/1.2 var(--sans); color: var(--tekst); margin-top: 8px; }
@@ -183,3 +183,52 @@ html.bez-przejsc *, html.bez-przejsc *::before, html.bez-przejsc *::after { tran
 [data-motyw="papier"] .baner b { color: #141a29; }
 [data-motyw="papier"] .motyw-wybor button { background: #fffdf8; border-color: #d6cebd; border-radius: 10px; font-family: var(--sans); }
 [data-motyw="papier"] .motyw-wybor button b { font-family: var(--szeryf); font-weight: 600; font-size: .95rem; }
+
+/* próbka motywu Grafit (kafelek w „Więcej” → Wygląd, widoczna w każdym motywie) */
+.probka-grafit { background: radial-gradient(90% 80% at 50% -10%, rgba(245, 165, 36, .2), transparent 70%), #0d0f12; border: 1px solid rgba(255, 255, 255, .12); }
+.probka-grafit i:nth-child(1) { background: #ece8e1; } .probka-grafit i:nth-child(2) { background: #4ccf8a; } .probka-grafit i:nth-child(3) { background: linear-gradient(180deg, #ffbf47, #e08a0b); border-radius: 3px; }
+.motyw-wybor button > span:last-child { font-size: .66rem; }
+
+/* ================= motyw „Grafit” (ciemny, bursztynowy – od 17.11.2026): <html data-motyw="grafit"> =================
+ * Grafitowe, prawie czarne tło, płaskie karty z cienką ramką, bursztynowy akcent zamiast morskiej poświaty, zysk zielony,
+ * strata koralowa, przyciski z lekko zaokrąglonymi rogami – jak grafit.css stron w silnik/ i Centrum na komputerze. */
+:root[data-motyw="grafit"] {
+  color-scheme: dark;
+  --tlo: #0d0f12; --tekst: #ece8e1; --tekst2: #b4ada3; --tekst3: #8b857c;
+  --akcent: #f5a524; --na-akcencie: #1d1404; --minus: #ff7262;
+  --sans: "Inter Tight", "Segoe UI Variable Display", -apple-system, system-ui, sans-serif;
+  --szklo: #15181d;
+  --przycisk-glowny: linear-gradient(180deg, #ffbf47 0%, #f5a524 55%, #e08a0b 100%);
+}
+[data-motyw="grafit"] body { font-family: var(--sans); letter-spacing: 0; background-color: var(--tlo);
+  background-image: radial-gradient(70% 45% at 50% -12%, rgba(245, 165, 36, .1), transparent 70%), linear-gradient(180deg, #111419 0%, #0d0f12 40%, #0a0b0e 100%); }
+[data-motyw="grafit"] body::before { display: none; }
+[data-motyw="grafit"] .wczytywanie::after { background: linear-gradient(90deg, transparent, #f5a524, transparent); }
+[data-motyw="grafit"] .zakladki { background: rgba(13, 15, 18, .94); border-top: 1px solid rgba(255, 255, 255, .08); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+[data-motyw="grafit"] .zakladki button { font: 600 .68rem/1.1 var(--sans); letter-spacing: 0; color: #8b857c; border-radius: 8px; }
+[data-motyw="grafit"] .zakladki button[aria-selected="true"] { color: #ffbf47; font-weight: 700; }
+[data-motyw="grafit"] .zakladki button[aria-selected="true"]::after { content: ""; position: absolute; top: -6px; left: 28%; right: 28%; height: 2px; border-radius: 0 0 2px 2px; background: var(--akcent); }
+[data-motyw="grafit"] .zakladki button[aria-selected="true"] .ik { filter: none; }
+[data-motyw="grafit"] .zakladki .nowe { background: #f5c518; box-shadow: 0 0 0 2px #0d0f12; }
+[data-motyw="grafit"] .tytul { font: 700 1.7rem/1.1 var(--sans); letter-spacing: -.03em; color: #fffaf2; }
+[data-motyw="grafit"] .karta { background: #15181d; border: 1px solid rgba(255, 255, 255, .08); border-radius: 12px; box-shadow: 0 18px 40px -28px rgba(0, 0, 0, .8); }
+[data-motyw="grafit"] .karta h2 { font: 700 1rem/1.3 var(--sans); letter-spacing: -.01em; color: #fffaf2; }
+[data-motyw="grafit"] .male { font-size: .84rem; }
+[data-motyw="grafit"] .male b, [data-motyw="grafit"] .tabela-danych b { color: #fffaf2; }
+[data-motyw="grafit"] button.drugi, [data-motyw="grafit"] button.glowny { font-family: var(--sans); font-size: .86rem; border-radius: 8px; }
+[data-motyw="grafit"] button.drugi { color: var(--tekst); background: #15181d; border: 1px solid rgba(255, 255, 255, .14); }
+[data-motyw="grafit"] button.glowny { color: var(--na-akcencie); border: 1px solid #c87a06; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 6px 18px -10px rgba(245, 165, 36, .8); }
+[data-motyw="grafit"] .karta-usun { border-color: rgba(255, 114, 98, .35); }
+[data-motyw="grafit"] button.niebezpieczny { font-family: var(--sans); border-radius: 8px; color: #fff; background: rgba(255, 90, 82, .2); border: 1px solid rgba(255, 90, 82, .7); }
+[data-motyw="grafit"] .usunieto { background: #0d0f12; }
+[data-motyw="grafit"] .usunieto h1 { font-family: var(--sans); color: #fffaf2; }
+[data-motyw="grafit"] .tabela-danych td { border-bottom-color: rgba(255, 255, 255, .07); }
+[data-motyw="grafit"] .bramka h1 { font: 700 1.55rem/1.15 var(--sans); letter-spacing: -.03em; color: #fffaf2; }
+[data-motyw="grafit"] .bramka-ikona { box-shadow: 0 14px 34px -14px rgba(245, 165, 36, .45); }
+[data-motyw="grafit"] .formularz label { font-size: .8rem; }
+[data-motyw="grafit"] .formularz input { font-family: var(--sans); color: #fffaf2; background: #101318; border: 1px solid rgba(255, 255, 255, .14); border-radius: 8px; }
+[data-motyw="grafit"] button.link { font-family: var(--sans); }
+[data-motyw="grafit"] .baner { background: #15181d; border: 1px solid rgba(255, 255, 255, .12); border-left: 3px solid var(--akcent); border-radius: 10px; box-shadow: 0 18px 40px -12px rgba(0, 0, 0, .8); }
+[data-motyw="grafit"] .baner b { color: #fffaf2; }
+[data-motyw="grafit"] .motyw-wybor button { background: #15181d; border-color: rgba(255, 255, 255, .14); border-radius: 10px; font-family: var(--sans); }
+[data-motyw="grafit"] .motyw-wybor button b { font-family: var(--sans); font-weight: 700; }
