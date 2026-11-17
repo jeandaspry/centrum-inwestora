@@ -64,5 +64,5 @@ window.PIT_TESTOWY = { wersja: 1, czas: Date.now() - 30 * 60000, zrodlo: 'kalkul
     { id: 'kr', nazwa: 'Kraken – spot', krotka: 'spot', platforma: 'Kraken', waluta: 'USD', naZywo: true, zrodlo: 'na żywo', w: g('p:Kraken'), salda: [s('BTC', 700, { ilosc: 0.0109, jedn: 'BTC', c: 64220, cw: 'USD', wu: 40 }), s('USD', 300, { ilosc: 300, jedn: 'USD', c: 1, cw: 'USD' })], pozycje: [] },
     { id: 'xtb', nazwa: 'XTB – rachunek USD', krotka: 'rachunek USD', platforma: 'XTB', waluta: 'USD', naZywo: false, zrodlo: 'eksport sprzed tygodnia', w: g('p:XTB'), salda: [s('Gotówka', 67.6, { r: 'gotowka' }), s('CSPX.UK', 500, { opis: 'ETF S&P 500', ilosc: 0.6, jedn: 'szt.', c: 833.33, cw: 'USD', wu: -32.4, wn: -32.4, r: 'pozycja' })], pozycje: [] }
   ];
-  P.wersja = 2;
+  P.wersja = 2; P.przeliczanie = 'dzis';
 })();

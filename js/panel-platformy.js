@@ -123,14 +123,14 @@
     </section>`;
     h += `<section class="karta"><h2>Historia <small>wpłacone netto i wartość</small></h2>${wykres(g, w, iw)}
       <p class="pl-legenda b-male"><span class="pl-l pl-l-dep"></span>wpłacone netto <span class="pl-l pl-l-wart"></span>wartość <span class="pl-l pl-l-minus"></span>strata <span class="pl-l pl-l-plus"></span>zysk</p>
-      <p class="b-male">Schodki = każda wpłata i wypłata. Wartość: dzienne zapisy panelu${g.odDnia ? ' od ' + data(g.odDnia) : ''} (dni, w których panel był włączony) + stan z migawki. Dotknij wykresu, żeby zobaczyć szczegóły.</p></section>`;
+      <p class="b-male">Schodki = każda wpłata i wypłata. Wartość: dzienne zapisy panelu${g.odDnia ? ' od ' + data(g.odDnia) : ''} (dni, w których panel był włączony) + stan z migawki.${P.przeliczanie === 'dzis' && w !== 'USD' ? ' Cały wykres po dzisiejszym kursie – wygląda tak samo jak w USD.' : ''} Dotknij wykresu, żeby zobaczyć szczegóły.</p></section>`;
     const lista = g.przeplywy.slice().reverse();
     h += `<section class="karta"><h2>${g.wszystkie ? 'Wpłaty i wypłaty spoza Twoich kont' : 'Wpłaty i wypłaty'} <small>${odmiana(lista.length, 'operacja', 'operacje', 'operacji')}</small></h2>
       ${lista.length ? lista.map(x => `<div class="pl-op">
         <div class="g"><span class="kier ${x.we ? 'we' : 'wy'}">${x.we ? '↓ wpłata' : '↑ wypłata'}</span><span class="d">${dataCzas(x.t)}</span><b>${kw(x.k[iw], w, { przybl: x.p[iw] })}</b></div>
         <div class="s">${E(x.skad)}${g.kontaIds.length > 1 ? ' · ' + E(x.konto) : ''} · ${E(x.ile)}${x.bc ? ' · <span class="minus">brak ceny – liczone 0</span>' : ''}</div>
         <div class="s">wpłacone netto po: ${kw(x.n[iw], w)}</div></div>`).join('') : '<p class="male">Brak wpłat i wypłat.</p>'}
-      <p class="b-male pl-akapit">${g.wszystkie ? 'Przelewy między Twoimi kontami (Kraken → Phantom → Hyperliquid, XTB PLN → IKE) się znoszą, więc ich tu nie ma.' : `Przelew z innej Twojej platformy jest dla tej platformy wpłatą.${g.ileWewnatrz ? ' Przesunięcia wewnątrz platformy (' + g.ileWewnatrz + ') się znoszą i ich tu nie ma.' : ''}`} ${w === 'USD' ? 'Kwota w USD z dnia operacji.' : 'Kwota po kursie NBP z dnia roboczego przed operacją.'} „≈” = wycena przybliżona.</p></section>`;
+      <p class="b-male pl-akapit">${g.wszystkie ? 'Przelewy między Twoimi kontami (Kraken → Phantom → Hyperliquid, XTB PLN → IKE) się znoszą, więc ich tu nie ma.' : `Przelew z innej Twojej platformy jest dla tej platformy wpłatą.${g.ileWewnatrz ? ' Przesunięcia wewnątrz platformy (' + g.ileWewnatrz + ') się znoszą i ich tu nie ma.' : ''}`} ${P.przeliczanie === 'dzis' ? 'Kwota w walucie konta z dnia operacji (USD; rachunki XTB w złotych – w złotych)' + (w === 'USD' ? '.' : ', przeliczona na ' + ZNAK[w] + ' po dzisiejszym kursie – ta sama kwota w innej walucie.') : w === 'USD' ? 'Kwota w USD z dnia operacji.' : 'Kwota po kursie NBP z dnia roboczego przed operacją.'} „≈” = wycena przybliżona.</p></section>`;
     // z czego składa się wynik: platformy (dla „wszystkie”), potem rachunki i salda; starsza migawka (bez sald) – konta platformy
     const rach = sekcjaRachunkow(g, m, live, w, iw);
     const sklad = g.wszystkie ? P.grupy.filter(x => !x.wszystkie).map(x => { const z = zZywym(x, m, live); return { nazwa: z.nazwa, klucz: z.klucz, a: z.w[w] }; })
